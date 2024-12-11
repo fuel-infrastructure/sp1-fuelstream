@@ -1,6 +1,6 @@
 [package]
 version = "0.1.0"
-name = "blobstream-script"
+name = "fuelstreamx-sp1-script"
 edition = "2021"
 
 [[bin]]

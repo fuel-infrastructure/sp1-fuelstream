@@ -1,6 +1,6 @@
 [package]
 version = "0.1.0"
-name = "blobstream-program"
+name = "fuelstreamx-sp1-program"
 edition = "2021"
 
 [dependencies]

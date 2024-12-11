@@ -13,8 +13,8 @@ use alloy::{
     transports::http::{Client, Http},
 };
 use anyhow::Result;
-use blobstream_script::util::TendermintRPCClient;
-use blobstream_script::{relay, TendermintProver};
+use fuelstreamx_sp1_script::util::TendermintRPCClient;
+use fuelstreamx_sp1_script::{relay, TendermintProver};
 use log::{error, info};
 use primitives::get_header_update_verdict;
 use sp1_sdk::{

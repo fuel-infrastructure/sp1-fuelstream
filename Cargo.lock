@@ -1287,46 +1287,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "blobstream-program"
-version = "0.1.0"
-dependencies = [
- "alloy",
- "primitives",
- "serde_cbor",
- "sha2 0.10.8",
- "sp1-zkvm",
- "tendermint",
- "tendermint-light-client-verifier",
-]
-
-[[package]]
-name = "blobstream-script"
-version = "0.1.0"
-dependencies = [
- "alloy",
- "anyhow",
- "chrono",
- "clap",
- "csv",
- "dotenv",
- "env_logger",
- "futures",
- "hex",
- "log",
- "primitives",
- "reqwest 0.11.27",
- "serde",
- "serde_cbor",
- "serde_json",
- "sp1-build",
- "sp1-sdk",
- "subtle-encoding",
- "tendermint",
- "tendermint-light-client-verifier",
- "tokio",
-]
-
-[[package]]
 name = "block-buffer"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2591,6 +2551,46 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e13624c2627564efccf4934284bdd98cbaa14e79b0b5a141218e507b3a823456"
 dependencies = [
  "percent-encoding",
+]
+
+[[package]]
+name = "fuelstreamx-sp1-program"
+version = "0.1.0"
+dependencies = [
+ "alloy",
+ "primitives",
+ "serde_cbor",
+ "sha2 0.10.8",
+ "sp1-zkvm",
+ "tendermint",
+ "tendermint-light-client-verifier",
+]
+
+[[package]]
+name = "fuelstreamx-sp1-script"
+version = "0.1.0"
+dependencies = [
+ "alloy",
+ "anyhow",
+ "chrono",
+ "clap",
+ "csv",
+ "dotenv",
+ "env_logger",
+ "futures",
+ "hex",
+ "log",
+ "primitives",
+ "reqwest 0.11.27",
+ "serde",
+ "serde_cbor",
+ "serde_json",
+ "sp1-build",
+ "sp1-sdk",
+ "subtle-encoding",
+ "tendermint",
+ "tendermint-light-client-verifier",
+ "tokio",
 ]
 
 [[package]]

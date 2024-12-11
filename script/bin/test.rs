@@ -1,5 +1,5 @@
-use blobstream_script::{TendermintProver, TENDERMINT_ELF};
 use clap::Parser;
+use fuelstreamx_sp1_script::{TendermintProver, TENDERMINT_ELF};
 use log::debug;
 use sp1_sdk::SP1Stdin;
 use tokio::runtime;
