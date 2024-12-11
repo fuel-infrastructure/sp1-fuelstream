@@ -14,16 +14,19 @@ use std::ops::Add;
 use tendermint::{block::Header, merkle::simple_hash_from_byte_vectors};
 use tendermint_light_client_verifier::types::LightBlock;
 use tendermint_light_client_verifier::Verdict;
-type DataRootTuple = sol! {
-    tuple(uint64, bytes32)
+
+/// Taken from:
+/// https://github.com/FuelLabs/fuel-rollup/blob/ea674087fb7b69e9abd834cbf6ef7a9d959f9ff2/contracts/interfaces/ISequencerMessageHandler.sol#L6C1-L10C1
+type BridgeCommitmentLeaf = sol! {
+    tuple(uint256, bytes32)
 };
 
-/// Compute the data commitment for the supplied headers. Each leaf in the Tendermint Merkle tree
-/// is the SHA256 hash of the concatenation of the block height and the header's last `Commit`.
-/// Excludes the last header's data hash from the commitment to avoid overlapping headers between
-/// commits.
-fn compute_data_commitment(headers: &[Header]) -> [u8; 32] {
-    let mut encoded_data_root_tuples: Vec<Vec<u8>> = Vec::new();
+/// Compute the bridge commitment for the supplied headers. Each leaf in the Tendermint Merkle tree
+/// is the SHA256 hash of the concatenation of the block height and the header's last
+/// `LastResultsHash`. Excludes the last header's last results hash from the commitment to avoid
+/// overlapping headers between commits.
+fn compute_bridge_commitment(headers: &[Header]) -> [u8; 32] {
+    let mut encoded_leaves: Vec<Vec<u8>> = Vec::new();
     // Loop over all headers except the last one.
     for i in 0..headers.len() - 1 {
         let curr_header = &headers[i];
@@ -34,20 +37,23 @@ fn compute_data_commitment(headers: &[Header]) -> [u8; 32] {
             panic!("invalid header");
         }
 
-        let data_hash: [u8; 32] = curr_header
-            .data_hash
-            .expect("Header has no data hash.")
+        let last_results_hash: [u8; 32] = curr_header
+            .last_results_hash
+            .expect("header has no last results hash.")
             .as_bytes()
             .try_into()
             .unwrap();
 
-        // ABI-encode the leaf corresponding to this header, which is a DataRootTuple.
-        let data_root_tuple = DataRootTuple::abi_encode(&(curr_header.height.value(), data_hash));
-        encoded_data_root_tuples.push(data_root_tuple);
+        // ABI-encode the leaf corresponding to this header, which is a BridgeCommitmentLeaf.
+        let encoded_leaf = BridgeCommitmentLeaf::abi_encode(&(
+            U256::from(curr_header.height.value()),
+            last_results_hash,
+        ));
+        encoded_leaves.push(encoded_leaf);
     }
 
     // Return the root of the Tendermint Merkle tree.
-    simple_hash_from_byte_vectors::<Sha256>(&encoded_data_root_tuples)
+    simple_hash_from_byte_vectors::<Sha256>(&encoded_leaves)
 }
 
 // Convert a boolean array to a U256. Used to commit to the validator bitmap.

@@ -13,8 +13,8 @@ pub fn get_header_update_verdict(trusted_block: &LightBlock, target_block: &Ligh
     let opt = Options {
         // Note: For additional security, set the trust threshold to 2/3.
         trust_threshold: TrustThreshold::TWO_THIRDS,
-        // 10 days trusting period is valid for chains with 14 day unbonding period.
-        trusting_period: Duration::from_secs(10 * 24 * 60 * 60),
+        // 9 days trusting period is valid for chains with 14 day unbonding period.
+        trusting_period: Duration::from_secs(9 * 24 * 60 * 60),
         clock_drift: Duration::ZERO,
     };
 

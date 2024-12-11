@@ -3,13 +3,13 @@ use serde::{Deserialize, Serialize};
 use tendermint::block::Header;
 use tendermint_light_client_verifier::types::LightBlock;
 
-/// uint64 trusted_block;
+/// uint256 trusted_block;
 /// bytes32 trusted_header_hash;
-/// uint64 target_block;
+/// uint256 target_block;
 /// bytes32 target_header_hash;
 /// bytes32 bridge_commitment;
 pub type ProofOutputs = sol! {
-    tuple(uint64, bytes32, uint64, bytes32, bytes32)
+    tuple(uint256, bytes32, uint256, bytes32, bytes32)
 };
 
 #[derive(Debug, Serialize, Deserialize)]
