@@ -9,7 +9,7 @@ use tendermint_light_client_verifier::types::LightBlock;
 /// bytes32 target_header_hash;
 /// bytes32 bridge_commitment;
 pub type ProofOutputs = sol! {
-    tuple(uint256, bytes32, uint256, bytes32, bytes32)
+    tuple(uint64, bytes32, uint64, bytes32, bytes32)
 };
 
 #[derive(Debug, Serialize, Deserialize)]

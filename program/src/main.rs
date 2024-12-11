@@ -2,23 +2,19 @@
 sp1_zkvm::entrypoint!(main);
 
 use alloy::primitives::B256;
-use alloy::primitives::U256;
 use alloy::sol;
 use alloy::sol_types::SolType;
 use primitives::get_header_update_verdict;
 use primitives::types::ProofInputs;
 use primitives::types::ProofOutputs;
 use sha2::Sha256;
-use std::collections::HashSet;
-use std::ops::Add;
 use tendermint::{block::Header, merkle::simple_hash_from_byte_vectors};
-use tendermint_light_client_verifier::types::LightBlock;
 use tendermint_light_client_verifier::Verdict;
 
-/// Taken from:
-/// https://github.com/FuelLabs/fuel-rollup/blob/ea674087fb7b69e9abd834cbf6ef7a9d959f9ff2/contracts/interfaces/ISequencerMessageHandler.sol#L6C1-L10C1
+/// Follows the structure as defined in:
+/// https://github.com/fuel-infrastructure/fuel-sequencer/blob/538bcdb449ba86f3db6d774c37d99056aa877f80/proto/fuelsequencer/commitments/types.proto#L9
 type BridgeCommitmentLeaf = sol! {
-    tuple(uint256, bytes32)
+    tuple(uint64, bytes32)
 };
 
 /// Compute the bridge commitment for the supplied headers. Each leaf in the Tendermint Merkle tree
@@ -45,67 +41,13 @@ fn compute_bridge_commitment(headers: &[Header]) -> [u8; 32] {
             .unwrap();
 
         // ABI-encode the leaf corresponding to this header, which is a BridgeCommitmentLeaf.
-        let encoded_leaf = BridgeCommitmentLeaf::abi_encode(&(
-            U256::from(curr_header.height.value()),
-            last_results_hash,
-        ));
+        let encoded_leaf =
+            BridgeCommitmentLeaf::abi_encode(&(&curr_header.height.value(), last_results_hash));
         encoded_leaves.push(encoded_leaf);
     }
 
     // Return the root of the Tendermint Merkle tree.
     simple_hash_from_byte_vectors::<Sha256>(&encoded_leaves)
-}
-
-// Convert a boolean array to a U256. Used to commit to the validator bitmap.
-fn convert_bitmap_to_u256(arr: [bool; 256]) -> U256 {
-    let mut res = U256::from(0);
-    for (index, &value) in arr.iter().enumerate() {
-        if value {
-            res = res.add(U256::from(1) << index)
-        }
-    }
-    res
-}
-
-/// Construct a bitmap of the intersection of the validators that signed off on the trusted and
-/// target header. Use the order of the validators from the trusted header. Equivocates slashing in
-/// the case that validators are malicious. 256 is chosen as the maximum number of validators as it
-/// is unlikely that Celestia has >256 validators.
-fn get_validator_bitmap_commitment(
-    trusted_light_block: &LightBlock,
-    target_light_block: &LightBlock,
-) -> U256 {
-    // If a validator has signed off on both headers, add them to the intersection set.
-    let mut validator_commit_intersection = HashSet::new();
-    for i in 0..trusted_light_block.signed_header.commit.signatures.len() {
-        for j in 0..target_light_block.signed_header.commit.signatures.len() {
-            let trusted_sig = &trusted_light_block.signed_header.commit.signatures[i];
-            let target_sig = &target_light_block.signed_header.commit.signatures[j];
-
-            if trusted_sig.is_commit()
-                && target_sig.is_commit()
-                && trusted_sig.validator_address() == target_sig.validator_address()
-            {
-                validator_commit_intersection.insert(trusted_sig.validator_address().unwrap());
-            }
-        }
-    }
-
-    // Construct the validator bitmap.
-    let mut validator_bitmap = [false; 256];
-    for (i, validator) in trusted_light_block
-        .validators
-        .validators()
-        .iter()
-        .enumerate()
-    {
-        if validator_commit_intersection.contains(&validator.address) {
-            validator_bitmap[i] = true;
-        }
-    }
-
-    // Convert the validator bitmap to a U256.
-    convert_bitmap_to_u256(validator_bitmap)
 }
 
 pub fn main() {
@@ -126,26 +68,22 @@ pub fn main() {
         Verdict::Success => (),
         Verdict::NotEnoughTrust(voting_power_tally) => {
             panic!(
-                "Not enough trust in the trusted header, voting power tally: {:?}",
+                "not enough trust in the trusted header, voting power tally: {:?}",
                 voting_power_tally
             );
         }
         Verdict::Invalid(err) => panic!(
-            "Could not verify updating to target_block, error: {:?}",
+            "could not verify updating to target_block, error: {:?}",
             err
         ),
     }
 
-    // Compute the data commitment across the range.
+    // Compute the bridge commitment across the range.
     let mut all_headers = Vec::new();
     all_headers.push(trusted_light_block.signed_header.header.clone());
     all_headers.extend(headers);
     all_headers.push(target_light_block.signed_header.header.clone());
-    let data_commitment = B256::from_slice(&compute_data_commitment(&all_headers));
-
-    // Get the commitment to the validator bitmap.
-    let validator_bitmap_u256 =
-        get_validator_bitmap_commitment(&trusted_light_block, &target_light_block);
+    let bridge_commitment = B256::from_slice(&compute_bridge_commitment(&all_headers));
 
     // ABI encode the proof outputs to bytes and commit them to the zkVM.
     let trusted_header_hash =
@@ -153,12 +91,11 @@ pub fn main() {
     let target_header_hash =
         B256::from_slice(target_light_block.signed_header.header.hash().as_bytes());
     let proof_outputs = ProofOutputs::abi_encode(&(
-        trusted_header_hash,
-        target_header_hash,
-        data_commitment,
         trusted_light_block.signed_header.header.height.value(),
+        trusted_header_hash,
         target_light_block.signed_header.header.height.value(),
-        validator_bitmap_u256,
+        target_header_hash,
+        bridge_commitment,
     ));
     sp1_zkvm::io::commit_slice(&proof_outputs);
 }
