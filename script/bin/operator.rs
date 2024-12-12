@@ -13,6 +13,7 @@ use alloy::{
     transports::http::{Client, Http},
 };
 use anyhow::Result;
+use fuelstreamx_sp1_script::light_client::FuelStreamXLightClient;
 use fuelstreamx_sp1_script::util::TendermintRPCClient;
 use fuelstreamx_sp1_script::{relay, TendermintProver};
 use log::{error, info};
