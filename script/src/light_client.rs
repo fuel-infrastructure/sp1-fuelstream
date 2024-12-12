@@ -6,7 +6,7 @@ use tendermint_light_client::{
     verifier::{
         options::Options,
         types::{Height, Status},
-        Verdict, Verifier,
+        Verdict,
     },
 };
 
@@ -99,57 +99,5 @@ impl FuelStreamXLightClient {
         }
 
         return last_trusted;
-    }
-
-    /// Checking for a valid block that the light client can progress to within a given range of blocks.
-    /// Since we need to obtain all block headers to reconstruct the bridge commitment within this range,
-    /// we must iterate through all the blocks.
-    /// Note: an optimization can be done by using a binary search to find the latest valid block first.
-    /// After finding the valid block, only the block header rpc is required thus avoiding 1 rpc call
-    /// to obtain the validator set per block
-    pub async fn skip(&mut self, trusted_height: Height, target_height: Height) {
-        // Save the trusted block into state
-        let trusted_block = self
-            .io
-            .fetch_light_block(AtHeight::At(trusted_height))
-            .expect("could not 'request' light block");
-        self.state
-            .light_store
-            .insert(trusted_block.clone(), Status::Verified);
-
-        // Loop until we reach the target height, or the first non-trusted block
-        // The trusted height is already stored in the state, so skip it
-        for current_block in trusted_height.increment().value()..target_height.increment().value() {
-            let current_height =
-                Height::try_from(current_block).expect("parsed to convert from u64 to Height");
-
-            // Get the untrusted block
-            debug!(
-                "retrieving block {} from tendermint",
-                current_height.value()
-            );
-            let untrusted_block = self
-                .io
-                .fetch_light_block(AtHeight::At(current_height))
-                .expect("could not 'request' light block");
-
-            // Validate and verify the current block
-            let verdict = self.verifier.verify_update_header(
-                untrusted_block.as_untrusted_state(),
-                trusted_block.as_trusted_state(),
-                &self.options,
-                untrusted_block.time(),
-            );
-
-            // If valid light block, save the block to storage and iterate to the next height
-            if verdict == Verdict::Success {
-                self.state
-                    .light_store
-                    .insert(untrusted_block.clone(), Status::Verified);
-            } else {
-                // If this block was not valid, this indicates that we cannot iterate to the next block
-                break;
-            }
-        }
     }
 }
