@@ -1,6 +1,8 @@
 use log::debug;
+use std::time::Duration;
+use tendermint::block::Block;
 use tendermint_light_client::{
-    components::io::{AtHeight, Io},
+    components::io::{AtHeight, Io, ProdIo},
     state::State,
     types::LightBlock,
     verifier::{
@@ -9,25 +11,36 @@ use tendermint_light_client::{
         Verdict,
     },
 };
+use tendermint_rpc::{Client, HttpClient, Url};
 
 use primitives::get_header_update_verdict;
 
 pub struct FuelStreamXLightClient {
-    /// The default tendermint light client storage
-    pub state: State,
-    /// Handles the connection with a tendermint chain
+    /// A Tendermint RPC client
+    rpc_client: HttpClient,
+    /// Interface for fetching light blocks from a full node.
     io: Box<dyn Io>,
-    /// Contains the tendermint chain options, including the trusting period and the trust threshold
-    options: Options,
 }
 
 impl FuelStreamXLightClient {
     /// Constructs a new FuelStreamX light client
-    pub fn new(io: impl Io + 'static, state: State, options: Options) -> Self {
+    pub async fn new(tendermint_rpc: Url) -> Self {
+        let rpc_client =
+            HttpClient::new(tendermint_rpc).expect("failed to connect to a tendermint node");
+
+        let peer_id = rpc_client
+            .status()
+            .await
+            .expect("failed to fetch node status")
+            .node_info
+            .id;
+
+        let timeout = Some(Duration::from_secs(15));
+        let io = ProdIo::new(peer_id, rpc_client.clone(), timeout);
+
         Self {
+            rpc_client,
             io: Box::new(io),
-            state,
-            options,
         }
     }
 
