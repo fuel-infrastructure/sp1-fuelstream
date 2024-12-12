@@ -45,8 +45,8 @@ impl FuelStreamXLightClient {
         return block;
     }
 
-    /// Finds the next valid block using binary search between the given block heights.
-    /// All fetched LightBlocks are stored in the local state.
+    /// Find the next valid block the light client can iterate to. Binary search is used if
+    /// max_end_block is not already valid. All fetched LightBlocks are stored in the local state.
     pub async fn get_next_block_sync(&mut self, start_block: u64, max_end_block: u64) -> u64 {
         assert!(start_block < max_end_block, "start_block > max_end_block");
         debug!(
@@ -54,18 +54,25 @@ impl FuelStreamXLightClient {
             start_block, max_end_block
         );
 
-        // Store the trusted block for future uses
+        // Store the blocks for future use
         let trusted_block = self.fetch_and_store_light_block(start_block, Status::Verified);
+        let untrusted_block = self.fetch_and_store_light_block(max_end_block, Status::Unverified);
 
-        // Finds the first untrusted block using binary search, if any
+        // If max_end_block is already valid, return it
+        if Verdict::Success == get_header_update_verdict(&trusted_block, &untrusted_block) {
+            self.state
+                .light_store
+                .insert(untrusted_block, Status::Verified);
+
+            return max_end_block;
+        }
+
+        // Else, find the first untrusted block using binary search
         let mut left = start_block;
         let mut right = max_end_block;
         let mut last_trusted = left;
-
-        // Continue while there might be blocks between left and right
         while left + 1 < right {
             let mid = left + (right - left) / 2;
-
             let untrusted_block = self.fetch_and_store_light_block(mid, Status::Unverified);
 
             // Verification step
