@@ -45,7 +45,10 @@ impl FuelStreamXLightClient {
         return block;
     }
 
+    /// Finds the next valid block using binary search between the given block heights.
+    /// All fetched LightBlocks are stored in the local state.
     pub async fn get_next_block_sync(&mut self, start_block: u64, max_end_block: u64) -> u64 {
+        assert!(start_block < max_end_block, "start_block > max_end_block");
         debug!(
             "finding the next light client header update between blocks {} and {}",
             start_block, max_end_block
