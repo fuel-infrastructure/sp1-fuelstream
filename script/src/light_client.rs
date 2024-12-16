@@ -108,21 +108,71 @@ impl FuelStreamXLightClient {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-    // use clap::Parser;
+    use serde_json::{json, Value};
 
-    // /// A helper type to parse Args more easily
-    // #[derive(Parser)]
-    // struct CommandParser<T: Args> {
-    //     #[command(flatten)]
-    //     args: T,
-    // }
+    use std::fs;
+
+    use wiremock::matchers::{any, method, path};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    // Helper function to load JSON response from file
+    fn load_mock_response(filename: &str) -> Value {
+        let content = fs::read_to_string(format!("fixtures/{}", filename))
+            .unwrap_or_else(|_| panic!("failed to read mock file: {}", filename));
+        serde_json::from_str(&content).unwrap()
+    }
 
     #[tokio::test]
     async fn test_light_client_with_mock_responses() {
         let server = MockServer::start().await;
-        let server_url = format!("http://{}", server.address()).parse().unwrap();
 
+        // -------- Mock requests
+
+        // This is mocking for /status
+        Mock::given(method("POST"))
+            .and(path("/"))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(load_mock_response("status.json")),
+            )
+            .mount(&server)
+            .await;
+
+        // If you need to continue with block requests:
+        // Mock::given(method("GET"))
+        //     .and(path("/block"))
+        //     .respond_with(|req: &wiremock::Request| {
+        //         let height = req
+        //             .url
+        //             .query_pairs()
+        //             .find(|(key, _)| key == "height")
+        //             .map(|(_, value)| value.to_string())
+        //             .unwrap_or_default();
+
+        //         ResponseTemplate::new(200)
+        //             .set_body_json(load_mock_response(&format!("block?height={}.json", height)))
+        //     })
+        //     .mount(&server)
+        //     .await;
+
+        // Log all incoming requests and respond with 404
+        Mock::given(any())
+            .respond_with(|req: &wiremock::Request| {
+                println!("Received request:");
+                println!("  Method: {}", req.method);
+                println!("  URL: {}", req.url);
+                println!("  Path: {}", req.url.path());
+                println!("  Query: {:?}", req.url.query());
+                println!("  Headers: {:?}", req.headers);
+
+                ResponseTemplate::new(404)
+            })
+            .mount(&server)
+            .await;
+
+        // Setup
+        let server_url = format!("http://{}", server.address()).parse().unwrap();
         let mut client = FuelStreamXLightClient::new(server_url).await;
+
+        let (start_block, end_block) = client.get_next_light_client_update(1, 100).await;
     }
 }
