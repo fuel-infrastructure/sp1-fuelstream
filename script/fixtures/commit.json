@@ -1,0 +1,64 @@
+{
+  "jsonrpc": "2.0",
+  "id": -1,
+  "result": {
+    "signed_header": {
+      "header": {
+        "version": {
+          "block": "11"
+        },
+        "chain_id": "seq-testnet-2",
+        "height": "179191",
+        "time": "2024-12-16T11:08:12.145782364Z",
+        "last_block_id": {
+          "hash": "9BA9FF89341A8E920740D691475695F4D35BCDDC3D320557659EBAB7C2206853",
+          "parts": {
+            "total": 1,
+            "hash": "716D9612EADC0F54246083CC2374C6A331DD24AB356F95D95A041DBE77C246A2"
+          }
+        },
+        "last_commit_hash": "186D869C840666FE1576E861B00462738D55583AEE589AF7DAFE4D997C2E1E2E",
+        "data_hash": "4604DB2F5113D62D0763D094025034D4E2802CEF9348A98AB039134CB43D5E6E",
+        "validators_hash": "9AFBC7DDD755138CD62E1C478862ED5EEC78FEA15C7D5C3FD7F1ABF24E494508",
+        "next_validators_hash": "9AFBC7DDD755138CD62E1C478862ED5EEC78FEA15C7D5C3FD7F1ABF24E494508",
+        "consensus_hash": "2F241FE85AE172797222662D77D23602F36BD68B53BB3C320434046C979875F8",
+        "app_hash": "0A311F429932220EFAF6A48F20B08CD9B5234C63CF501BDCE62657F48B6C8DE8",
+        "last_results_hash": "9173961FF4F2E20AC385A90D0109BE09F09A52AA050662F96B0BCA20ECC9F045",
+        "evidence_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+        "proposer_address": "C7F0068A53F520E752D7800A1C8422F9426B53E0"
+      },
+      "commit": {
+        "height": "179191",
+        "round": 0,
+        "block_id": {
+          "hash": "65B612DA819C4931CD370885CA012A50980D8E9597C3316ADBC60A04F1ADEDAC",
+          "parts": {
+            "total": 1,
+            "hash": "20AD34A94E74921C752A8BC4BF7F0D31D9D569DB3E3B1036EA7C9DC8C774C72B"
+          }
+        },
+        "signatures": [
+          {
+            "block_id_flag": 2,
+            "validator_address": "C7F0068A53F520E752D7800A1C8422F9426B53E0",
+            "timestamp": "2024-12-16T11:08:17.161407454Z",
+            "signature": "Y7c+XHLouyrPkVjQk8DAex9kRlz5Nxlie4BocN5bctVsjaqTbjE7RKTaDsq24IjMrPB19wOsxGR8SpjPE26CDQ=="
+          },
+          {
+            "block_id_flag": 1,
+            "validator_address": "",
+            "timestamp": "0001-01-01T00:00:00Z",
+            "signature": null
+          },
+          {
+            "block_id_flag": 1,
+            "validator_address": "",
+            "timestamp": "0001-01-01T00:00:00Z",
+            "signature": null
+          }
+        ]
+      }
+    },
+    "canonical": false
+  }
+}
