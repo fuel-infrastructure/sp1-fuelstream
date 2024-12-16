@@ -111,9 +111,10 @@ mod tests {
     use serde_json::{json, Value};
 
     use std::fs;
+    use std::str::from_utf8;
 
-    use wiremock::matchers::{any, method, path};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
+    use wiremock::matchers::{method, path, query_param};
+    use wiremock::{Mock, MockServer, Request, ResponseTemplate};
 
     // Helper function to load JSON response from file
     fn load_mock_response(filename: &str) -> Value {
@@ -128,14 +129,36 @@ mod tests {
 
         // -------- Mock requests
 
-        // This is mocking for /status
-        Mock::given(method("POST"))
-            .and(path("/"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(load_mock_response("status.json")),
-            )
-            .mount(&server)
-            .await;
+        // Mock block requests
+        // Mock::given(method("POST"))
+        //     .and(path("/"))
+        //     .and(|req: &wiremock::Request| {
+        //         // Parse the body as UTF-8 string first
+        //         if let Ok(body_str) = from_utf8(&req.body) {
+        //             // Then parse as JSON
+        //             if let Ok(body) = serde_json::from_str::<Value>(body_str) {
+        //                 if let Some(method) = body.get("method") {
+        //                     return method.as_str() == Some("block");
+        //                 }
+        //             }
+        //         }
+        //         false
+        //     })
+        //     .respond_with(|req: &wiremock::Request| {
+        //         // Parse request body
+        //         let body_str = from_utf8(&req.body).unwrap();
+        //         let body: Value = serde_json::from_str(body_str).unwrap();
+        //         let height = body["params"]["height"]
+        //             .as_str()
+        //             .unwrap_or("0")
+        //             .parse::<u64>()
+        //             .unwrap();
+
+        //         ResponseTemplate::new(200)
+        //             .set_body_json(load_mock_response(&format!("block?height={}.json", height)))
+        //     })
+        //     .mount(&server)
+        //     .await;
 
         // If you need to continue with block requests:
         // Mock::given(method("GET"))
@@ -154,25 +177,76 @@ mod tests {
         //     .mount(&server)
         //     .await;
 
-        // Log all incoming requests and respond with 404
-        Mock::given(any())
-            .respond_with(|req: &wiremock::Request| {
-                println!("Received request:");
-                println!("  Method: {}", req.method);
-                println!("  URL: {}", req.url);
-                println!("  Path: {}", req.url.path());
-                println!("  Query: {:?}", req.url.query());
-                println!("  Headers: {:?}", req.headers);
+        // Mock the /status call
+        Mock::given(method("POST"))
+            .and(path("/"))
+            .and(|req: &wiremock::Request| {
+                let body_str = std::str::from_utf8(&req.body).unwrap();
+                if let Ok(body) = serde_json::from_str::<serde_json::Value>(body_str) {
+                    body.get("method").and_then(|m| m.as_str()) == Some("status")
+                } else {
+                    false
+                }
+            })
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(load_mock_response("status.json")),
+            )
+            .mount(&server)
+            .await;
 
-                ResponseTemplate::new(404)
+        // Mock the /commit endpoint for a given height
+        Mock::given(method("GET"))
+            .and(path("/commit"))
+            .and(|req: &Request| {
+                println!("here");
+                req.url
+                    .query_pairs()
+                    .any(|(key, value)| key == "height" && value.parse::<u64>().is_ok())
+            })
+            .respond_with(|req: &wiremock::Request| {
+                // Parse request body
+                let body_str = from_utf8(&req.body).unwrap();
+                let body: Value = serde_json::from_str(body_str).unwrap();
+                let height = body["params"]["height"]
+                    .as_str()
+                    .unwrap_or("0")
+                    .parse::<u64>()
+                    .unwrap();
+
+                ResponseTemplate::new(200).set_body_json(load_mock_response(&format!(
+                    "commit?height={}.json",
+                    height
+                )))
+            })
+            .mount(&server)
+            .await;
+
+        // Mock the /validators endpoint for a given height
+        Mock::given(method("GET"))
+            .and(path("/validators"))
+            .respond_with(|req: &wiremock::Request| {
+                // Parse request body
+                let body_str = from_utf8(&req.body).unwrap();
+                let body: Value = serde_json::from_str(body_str).unwrap();
+                let height = body["params"]["height"]
+                    .as_str()
+                    .unwrap_or("0")
+                    .parse::<u64>()
+                    .unwrap();
+
+                ResponseTemplate::new(200).set_body_json(load_mock_response(&format!(
+                    "validators?height={}.json",
+                    height
+                )))
             })
             .mount(&server)
             .await;
 
         // Setup
         let server_url = format!("http://{}", server.address()).parse().unwrap();
+        println!("{}", &server_url);
         let mut client = FuelStreamXLightClient::new(server_url).await;
 
-        let (start_block, end_block) = client.get_next_light_client_update(1, 100).await;
+        let (start_block, end_block) = client.get_next_light_client_update(177840, 177850).await;
     }
 }
