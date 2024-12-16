@@ -104,3 +104,25 @@ impl FuelStreamXLightClient {
         return block;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+    // use clap::Parser;
+
+    // /// A helper type to parse Args more easily
+    // #[derive(Parser)]
+    // struct CommandParser<T: Args> {
+    //     #[command(flatten)]
+    //     args: T,
+    // }
+
+    #[tokio::test]
+    async fn test_light_client_with_mock_responses() {
+        let server = MockServer::start().await;
+        let server_url = format!("http://{}", server.address()).parse().unwrap();
+
+        let mut client = FuelStreamXLightClient::new(server_url).await;
+    }
+}

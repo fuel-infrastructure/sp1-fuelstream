@@ -1,5 +1,5 @@
 use sp1_sdk::{HashableKey, ProverClient};
-const BLOBSTREAMX_ELF: &[u8] = include_bytes!("../../elf/blobstream-elf");
+const BLOBSTREAMX_ELF: &[u8] = include_bytes!("../../elf/fuelstreamx-elf");
 
 #[tokio::main]
 pub async fn main() {
