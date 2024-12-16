@@ -44,23 +44,13 @@ impl FuelStreamXLightClient {
         }
     }
 
-    /// Fetches a light block from a CometBFT node and stores it in the local state.
-    fn fetch_and_store_light_block(&mut self, block_height: u64, status: Status) -> LightBlock {
-        debug!("fetching block {} from CometBFT", block_height);
-
-        let block = self
-            .io
-            .fetch_light_block(AtHeight::At(Height::try_from(block_height).unwrap()))
-            .expect(&format!("could not request light block {}", block_height));
-
-        self.state.light_store.insert(block.clone(), status);
-
-        return block;
-    }
-
     /// Find the next valid block the light client can iterate to. Binary search is used if
-    /// max_end_block is not already valid. All fetched LightBlocks are stored in the local state.
-    pub async fn get_next_block_sync(&mut self, start_block: u64, max_end_block: u64) -> u64 {
+    /// max_end_block is not already valid.
+    pub async fn get_next_light_client_update(
+        &mut self,
+        start_block: u64,
+        max_end_block: u64,
+    ) -> (LightBlock, LightBlock) {
         assert!(start_block < max_end_block, "start_block > max_end_block");
         debug!(
             "finding the next light client header update between blocks {} and {}",
@@ -68,16 +58,12 @@ impl FuelStreamXLightClient {
         );
 
         // Store the blocks for future use
-        let trusted_block = self.fetch_and_store_light_block(start_block, Status::Verified);
-        let untrusted_block = self.fetch_and_store_light_block(max_end_block, Status::Unverified);
+        let trusted_block = self.fetch_light_block(start_block);
+        let untrusted_block = self.fetch_light_block(max_end_block);
 
-        // If max_end_block is already valid, return it
+        // If max_end_block height is already valid, return it
         if Verdict::Success == get_header_update_verdict(&trusted_block, &untrusted_block) {
-            self.state
-                .light_store
-                .insert(untrusted_block, Status::Verified);
-
-            return max_end_block;
+            return (trusted_block, untrusted_block);
         }
 
         // Else, find the first untrusted block using binary search
@@ -86,7 +72,7 @@ impl FuelStreamXLightClient {
         let mut last_trusted = left;
         while left + 1 < right {
             let mid = left + (right - left) / 2;
-            let untrusted_block = self.fetch_and_store_light_block(mid, Status::Unverified);
+            let untrusted_block = self.fetch_light_block(mid);
 
             // Verification step
             match get_header_update_verdict(&trusted_block, &untrusted_block) {
@@ -94,23 +80,27 @@ impl FuelStreamXLightClient {
                 Verdict::Success => {
                     last_trusted = mid;
                     left = mid;
-
-                    // LightBlock is now trust-worthy
-                    self.state
-                        .light_store
-                        .insert(untrusted_block.clone(), Status::Verified);
                 }
                 // If mid block is not trusted, search in lower half
                 _ => {
                     right = mid;
-
-                    self.state
-                        .light_store
-                        .insert(untrusted_block.clone(), Status::Unverified);
                 }
             }
         }
 
-        return last_trusted;
+        // TODO: test this function
+        return (trusted_block, untrusted_block);
+    }
+
+    /// Fetches a LightBlock from a CometBFT node. LightBlocks include validator sets.
+    fn fetch_light_block(&mut self, block_height: u64) -> LightBlock {
+        debug!("fetching block {} from CometBFT", block_height);
+
+        let block = self
+            .io
+            .fetch_light_block(AtHeight::At(Height::try_from(block_height).unwrap()))
+            .expect(&format!("could not request light block {}", block_height));
+
+        return block;
     }
 }
