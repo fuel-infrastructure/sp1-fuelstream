@@ -112,20 +112,21 @@ mod tests {
 
     use core::panic;
     use std::fs;
-    use std::str::from_utf8;
 
-    use wiremock::matchers::{any, method, path, query_param};
-    use wiremock::{Mock, MockServer, Request, ResponseTemplate};
+    use wiremock::matchers::{method, path};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
 
-    // Helper function to load JSON response from file
-    fn load_mock_response(filename: &str) -> Value {
-        let content = fs::read_to_string(format!("fixtures/{}", filename))
+    // Helper function to load JSON response from filesystem
+    fn load_mock_response(test_name: &str, filename: &str) -> Value {
+        // Load from filesystem
+        let content = fs::read_to_string(format!("fixtures/{}/{}", test_name, filename))
             .unwrap_or_else(|_| panic!("failed to read mock file: {}", filename));
+        // Json Load
         serde_json::from_str(&content).unwrap()
     }
 
     #[test]
-    fn test_light_client_with_mock_responses() {
+    fn next_light_client_update_succeeds_without_binary_search() {
         // The tendermint_light_client library uses synchronous calls, run the tests in async block_on
         // to avoid deadlocks. Don't use tokio's async runtime.
         let runtime = tokio::runtime::Runtime::new().unwrap();
@@ -143,27 +144,28 @@ mod tests {
 
                     // Extract the method from the request body
                     let method = body["method"].as_str().unwrap_or_default();
-
                     match method {
-                        "status" => ResponseTemplate::new(200)
-                            .set_body_json(load_mock_response("status.json")),
+                        "status" => ResponseTemplate::new(200).set_body_json(load_mock_response(
+                            "next_light_client_update_succeeds_without_binary_search",
+                            "status.json",
+                        )),
                         "commit" => {
                             // Extract height from params
                             let height = body["params"]["height"].as_str().unwrap_or("0");
 
-                            ResponseTemplate::new(200).set_body_json(load_mock_response(&format!(
-                                "commit?height={}.json",
-                                height
-                            )))
+                            ResponseTemplate::new(200).set_body_json(load_mock_response(
+                                "next_light_client_update_succeeds_without_binary_search",
+                                &format!("commit?height={}.json", height),
+                            ))
                         }
                         "validators" => {
                             // Extract height from params
                             let height = body["params"]["height"].as_str().unwrap_or("0");
 
-                            ResponseTemplate::new(200).set_body_json(load_mock_response(&format!(
-                                "validators?height={}.json",
-                                height
-                            )))
+                            ResponseTemplate::new(200).set_body_json(load_mock_response(
+                                "next_light_client_update_succeeds_without_binary_search",
+                                &format!("validators?height={}.json", height),
+                            ))
                         }
                         _ => {
                             panic!("unknown method received, method: {}, {}", method, body_str);
@@ -174,6 +176,7 @@ mod tests {
                 .await;
 
             // -------- FuelstreamX setup
+
             let server_url = format!("http://{}", server.address()).parse().unwrap();
             let mut client = FuelStreamXLightClient::new(server_url).await;
             let (start_block, end_block) =
