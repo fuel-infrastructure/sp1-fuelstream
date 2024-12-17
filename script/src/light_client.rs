@@ -108,13 +108,26 @@ impl FuelStreamXLightClient {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::{json, Value};
+    use serde_json::Value;
 
     use core::panic;
     use std::fs;
 
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    // Macro to get the current function name
+    macro_rules! function_name {
+        () => {{
+            fn f() {}
+            // Use type_name_of_val to get the full path including "::f"
+            let name = std::any::type_name_of_val(&f);
+            // Remove the trailing "::f" from the function path
+            let trimmed = &name[..name.len() - 3];
+            // Split by "::" and take the last segment, which will be the function name
+            trimmed.split("::").last().unwrap_or("")
+        }};
+    }
 
     // Helper function to load JSON response from filesystem
     fn load_mock_response(test_name: &str, filename: &str) -> Value {
@@ -125,65 +138,61 @@ mod tests {
         serde_json::from_str(&content).unwrap()
     }
 
+    // Helper function to set up FuelStreamXLightClient pointed to a mocked CometBFT server
+    async fn setup_client_with_mocked_server(
+        test_name: &'static str,
+    ) -> (MockServer, FuelStreamXLightClient) {
+        let server = MockServer::start().await;
+
+        // -------- Mock requests
+
+        Mock::given(method("POST"))
+            .and(path("/"))
+            .respond_with(move |req: &wiremock::Request| {
+                let body_str = std::str::from_utf8(&req.body).unwrap();
+                let body: serde_json::Value = serde_json::from_str(body_str).unwrap();
+                let method = body["method"].as_str().unwrap_or_default();
+
+                match method {
+                    "status" => ResponseTemplate::new(200)
+                        .set_body_json(load_mock_response(&test_name, "status.json")),
+                    "commit" => {
+                        let height = body["params"]["height"].as_str().unwrap_or("0");
+                        ResponseTemplate::new(200).set_body_json(load_mock_response(
+                            &test_name,
+                            &format!("commit?height={}.json", height),
+                        ))
+                    }
+                    "validators" => {
+                        let height = body["params"]["height"].as_str().unwrap_or("0");
+                        ResponseTemplate::new(200).set_body_json(load_mock_response(
+                            &test_name,
+                            &format!("validators?height={}.json", height),
+                        ))
+                    }
+                    _ => panic!("unknown method received, method: {}, {}", method, body_str),
+                }
+            })
+            .mount(&server)
+            .await;
+
+        // -------- FuelstreamX setup
+        let client =
+            FuelStreamXLightClient::new(format!("http://{}", server.address()).parse().unwrap())
+                .await;
+
+        (server, client)
+    }
+
     #[test]
     fn next_light_client_update_succeeds_without_binary_search() {
+        let test_name = function_name!();
+
         // The tendermint_light_client library uses synchronous calls, run the tests in async block_on
         // to avoid deadlocks. Don't use tokio's async runtime.
         let runtime = tokio::runtime::Runtime::new().unwrap();
         runtime.block_on(async {
-            let server = MockServer::start().await;
-
-            // -------- Mock requests
-
-            // All CometBFT requests are POST, the method called is found inside the request's body
-            Mock::given(method("POST"))
-                .and(path("/"))
-                .respond_with(|req: &wiremock::Request| {
-                    let body_str = std::str::from_utf8(&req.body).unwrap();
-                    let body: serde_json::Value = serde_json::from_str(body_str).unwrap();
-
-                    // Extract the method from the request body
-                    let method = body["method"].as_str().unwrap_or_default();
-                    match method {
-                        "status" => ResponseTemplate::new(200).set_body_json(load_mock_response(
-                            "next_light_client_update_succeeds_without_binary_search",
-                            "status.json",
-                        )),
-                        "commit" => {
-                            // Extract height from params
-                            let height = body["params"]["height"].as_str().unwrap_or("0");
-
-                            ResponseTemplate::new(200).set_body_json(load_mock_response(
-                                "next_light_client_update_succeeds_without_binary_search",
-                                &format!("commit?height={}.json", height),
-                            ))
-                        }
-                        "validators" => {
-                            // Extract height from params
-                            let height = body["params"]["height"].as_str().unwrap_or("0");
-
-                            ResponseTemplate::new(200).set_body_json(load_mock_response(
-                                "next_light_client_update_succeeds_without_binary_search",
-                                &format!("validators?height={}.json", height),
-                            ))
-                        }
-                        _ => {
-                            panic!("unknown method received, method: {}, {}", method, body_str);
-                        }
-                    }
-                })
-                .mount(&server)
-                .await;
-
-            // -------- FuelstreamX setup
-
-            let mut client = FuelStreamXLightClient::new(
-                format!("http://{}", server.address()).parse().unwrap(),
-            )
-            .await;
-
-            // -------- Verification
-
+            let (_, mut client) = setup_client_with_mocked_server(test_name).await;
             let (start_block, end_block) =
                 client.get_next_light_client_update(177840, 177844).await;
 
