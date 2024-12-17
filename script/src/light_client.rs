@@ -126,10 +126,9 @@ mod tests {
 
     #[test]
     fn test_light_client_with_mock_responses() {
-        // Create a new runtime for this test
+        // The tendermint_light_client library uses synchronous calls, run the tests in async block_on
+        // to avoid deadlocks. Don't use tokio's async runtime.
         let runtime = tokio::runtime::Runtime::new().unwrap();
-
-        // Run the async test code in blocking mode
         runtime.block_on(async {
             let server = MockServer::start().await;
 
@@ -174,12 +173,13 @@ mod tests {
                 .mount(&server)
                 .await;
 
-            // Setup
+            // -------- FuelstreamX setup
             let server_url = format!("http://{}", server.address()).parse().unwrap();
-            println!("{}", &server_url);
             let mut client = FuelStreamXLightClient::new(server_url).await;
             let (start_block, end_block) =
                 client.get_next_light_client_update(177840, 177850).await;
+
+            // -------- Verification
         });
     }
 }
