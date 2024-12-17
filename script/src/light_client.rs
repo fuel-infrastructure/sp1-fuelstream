@@ -201,4 +201,22 @@ mod tests {
             assert_eq!(end_block.height().value(), 177844);
         });
     }
+
+    #[test]
+    fn next_light_client_update_succeeds_with_binary_search() {
+        let test_name = function_name!();
+
+        // The tendermint_light_client library uses synchronous calls, run the tests in async block_on
+        // to avoid deadlocks. Don't use tokio's async runtime.
+        let runtime = tokio::runtime::Runtime::new().unwrap();
+        runtime.block_on(async {
+            let (_, mut client) = setup_client_with_mocked_server(test_name).await;
+            let (start_block, end_block) =
+                client.get_next_light_client_update(177840, 177846).await;
+
+            // No 66% voting power changes, end_block == max_end_block
+            assert_eq!(start_block.height().value(), 177840);
+            assert_eq!(end_block.height().value(), 177844);
+        });
+    }
 }
