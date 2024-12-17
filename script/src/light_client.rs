@@ -177,12 +177,19 @@ mod tests {
 
             // -------- FuelstreamX setup
 
-            let server_url = format!("http://{}", server.address()).parse().unwrap();
-            let mut client = FuelStreamXLightClient::new(server_url).await;
-            let (start_block, end_block) =
-                client.get_next_light_client_update(177840, 177850).await;
+            let mut client = FuelStreamXLightClient::new(
+                format!("http://{}", server.address()).parse().unwrap(),
+            )
+            .await;
 
             // -------- Verification
+
+            let (start_block, end_block) =
+                client.get_next_light_client_update(177840, 177844).await;
+
+            // No 66% voting power changes, end_block == max_end_block
+            assert_eq!(start_block.height().value(), 177840);
+            assert_eq!(end_block.height().value(), 177844);
         });
     }
 }
