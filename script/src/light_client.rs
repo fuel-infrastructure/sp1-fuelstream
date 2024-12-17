@@ -110,6 +110,7 @@ mod tests {
     use super::*;
     use serde_json::{json, Value};
 
+    use core::panic;
     use std::fs;
     use std::str::from_utf8;
 
@@ -123,121 +124,62 @@ mod tests {
         serde_json::from_str(&content).unwrap()
     }
 
-    #[tokio::test]
-    async fn test_light_client_with_mock_responses() {
-        let server = MockServer::start().await;
+    #[test]
+    fn test_light_client_with_mock_responses() {
+        // Create a new runtime for this test
+        let runtime = tokio::runtime::Runtime::new().unwrap();
 
-        // -------- Mock requests
+        // Run the async test code in blocking mode
+        runtime.block_on(async {
+            let server = MockServer::start().await;
 
-        // Mock the /status call
-        Mock::given(method("POST"))
-            .and(path("/"))
-            .and(|req: &wiremock::Request| {
-                let body_str = std::str::from_utf8(&req.body).unwrap();
-                if let Ok(body) = serde_json::from_str::<serde_json::Value>(body_str) {
-                    body.get("method").and_then(|m| m.as_str()) == Some("status")
-                } else {
-                    false
-                }
-            })
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(load_mock_response("status.json")),
-            )
-            .mount(&server)
-            .await;
+            // -------- Mock requests
 
-        // Mock latest commit
-        Mock::given(method("GET"))
-            .and(path("/commit"))
-            .respond_with({
-                ResponseTemplate::new(200).set_body_json(load_mock_response("commit.json"))
-            })
-            .mount(&server)
-            .await;
+            // All CometBFT requests are POST, the method called is found inside the request's body
+            Mock::given(method("POST"))
+                .and(path("/"))
+                .respond_with(|req: &wiremock::Request| {
+                    let body_str = std::str::from_utf8(&req.body).unwrap();
+                    let body: serde_json::Value = serde_json::from_str(body_str).unwrap();
 
-        // Mock the /commit endpoint for a given height
-        // Mock::given(method("GET"))
-        //     .and(path("/commit"))
-        //     .and(|req: &Request| {
-        //         println!("here ser"); // This should print if the request is matched
-        //         req.url
-        //             .query_pairs()
-        //             .any(|(key, value)| key == "height" && value.parse::<u64>().is_ok())
-        //     })
-        //     .respond_with(|req: &Request| {
-        //         // Extract height directly from the query parameters
-        //         let height: u64 = req
-        //             .url
-        //             .query_pairs()
-        //             .find(|(k, _)| k == "height")
-        //             .and_then(|(_, v)| v.parse::<u64>().ok())
-        //             .unwrap_or(0);
+                    // Extract the method from the request body
+                    let method = body["method"].as_str().unwrap_or_default();
 
-        //         // No request body is involved in a GET request, so we don't parse `req.body` as JSON.
-        //         // Instead, just serve the fixture file based on the height from the query parameter.
-        //         ResponseTemplate::new(200).set_body_json(load_mock_response(&format!(
-        //             "commit?height={}.json",
-        //             height
-        //         )))
-        //     })
-        //     .mount(&server)
-        //     .await;
+                    match method {
+                        "status" => ResponseTemplate::new(200)
+                            .set_body_json(load_mock_response("status.json")),
+                        "commit" => {
+                            // Extract height from params
+                            let height = body["params"]["height"].as_str().unwrap_or("0");
 
-        // // Mock the /validators endpoint for a given height
-        // Mock::given(method("GET"))
-        //     .and(path("/validators"))
-        //     .and(query_param("height", "177840"))
-        //     .respond_with(|req: &wiremock::Request| {
-        //         let body_str = from_utf8(&req.body).unwrap();
-        //         let body: Value = serde_json::from_str(body_str).unwrap();
-        //         let height = body["params"]["height"]
-        //             .as_str()
-        //             .unwrap_or("0")
-        //             .parse::<u64>()
-        //             .unwrap();
+                            ResponseTemplate::new(200).set_body_json(load_mock_response(&format!(
+                                "commit?height={}.json",
+                                height
+                            )))
+                        }
+                        "validators" => {
+                            // Extract height from params
+                            let height = body["params"]["height"].as_str().unwrap_or("0");
 
-        //         ResponseTemplate::new(200).set_body_json(load_mock_response(&format!(
-        //             "validators?height={}.json",
-        //             height
-        //         )))
-        //     })
-        //     .mount(&server)
-        //     .await;
+                            ResponseTemplate::new(200).set_body_json(load_mock_response(&format!(
+                                "validators?height={}.json",
+                                height
+                            )))
+                        }
+                        _ => {
+                            panic!("unknown method received, method: {}, {}", method, body_str);
+                        }
+                    }
+                })
+                .mount(&server)
+                .await;
 
-        // Mock the /commit endpoint for a given height
-        // Mock::given(method("GET"))
-        //     .and(path("/commit"))
-        //     .and(query_param("height", "1"))
-        //     .respond_with(
-        //         ResponseTemplate::new(200)
-        //             .set_body_json(load_mock_response("commit?height=177840.json")),
-        //     )
-        //     .mount(&server)
-        //     .await;
-
-        // Mock the /validators endpoint for a given height
-        // Mock::given(method("GET"))
-        //     .and(path("/validators"))
-        //     .and(query_param("height", "1"))
-        //     .respond_with(|req: &Request| {
-        //         println!("Caught request:");
-        //         println!("  Method: {}", req.method);
-        //         println!("  URL: {}", req.url);
-        //         println!("  Path: {}", req.url.path());
-        //         println!("  Query: {:?}", req.url.query());
-        //         println!("  Headers: {:?}", req.headers);
-
-        //         ResponseTemplate::new(200)
-        //             .set_body_json(load_mock_response("validators?height=177840.json"))
-        //     })
-        //     .mount(&server)
-        //     .await;
-
-        // Setup
-        let server_url = format!("http://{}", server.address()).parse().unwrap();
-        println!("{}", &server_url);
-        let mut client = FuelStreamXLightClient::new(server_url).await;
-
-        let (start_block, end_block) = client.get_next_light_client_update(177840, 177850).await;
+            // Setup
+            let server_url = format!("http://{}", server.address()).parse().unwrap();
+            println!("{}", &server_url);
+            let mut client = FuelStreamXLightClient::new(server_url).await;
+            let (start_block, end_block) =
+                client.get_next_light_client_update(177840, 177850).await;
+        });
     }
 }
