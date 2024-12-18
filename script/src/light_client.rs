@@ -64,6 +64,7 @@ impl FuelStreamXLightClient {
 
         // If max_end_block height is already valid, return it
         if Verdict::Success == get_header_update_verdict(&trusted_block, &max_untrusted_block) {
+            println!("HEREEERERERE");
             return (trusted_block, max_untrusted_block);
         }
 
@@ -100,13 +101,11 @@ impl FuelStreamXLightClient {
     /// Fetches a LightBlock from a CometBFT node. LightBlocks include validator sets.
     fn fetch_light_block(&mut self, block_height: u64) -> LightBlock {
         debug!("fetching block {} from CometBFT", block_height);
+        let error_msg = format!("could not request light block {}", block_height);
 
-        let block = self
-            .io
+        self.io
             .fetch_light_block(AtHeight::At(Height::try_from(block_height).unwrap()))
-            .expect(&format!("could not request light block {}", block_height));
-
-        return block;
+            .expect(&error_msg)
     }
 }
 
@@ -160,18 +159,18 @@ mod tests {
 
                 match method {
                     "status" => ResponseTemplate::new(200)
-                        .set_body_json(load_mock_response(&test_name, "status.json")),
+                        .set_body_json(load_mock_response(test_name, "status.json")),
                     "commit" => {
                         let height = body["params"]["height"].as_str().unwrap_or("0");
                         ResponseTemplate::new(200).set_body_json(load_mock_response(
-                            &test_name,
+                            test_name,
                             &format!("commit?height={}.json", height),
                         ))
                     }
                     "validators" => {
                         let height = body["params"]["height"].as_str().unwrap_or("0");
                         ResponseTemplate::new(200).set_body_json(load_mock_response(
-                            &test_name,
+                            test_name,
                             &format!("validators?height={}.json", height),
                         ))
                     }
@@ -208,7 +207,7 @@ mod tests {
     }
 
     #[test]
-    fn next_light_client_update_succeeds_with_binary_search_same_validator_set() {
+    fn next_light_client_update_succeeds_with_lower_binary_search_same_validator_set() {
         let test_name = function_name!();
 
         // The tendermint_light_client library uses synchronous calls, run the tests in async block_on
@@ -217,12 +216,36 @@ mod tests {
         runtime.block_on(async {
             let (_, mut client) = setup_client_with_mocked_server(test_name).await;
             let (start_block, end_block) =
-                client.get_next_light_client_update(177840, 177850).await;
+                client.get_next_light_client_update(177840, 177846).await;
 
             // Block 177843: Tx submitted to change voting power >66% at
             // Block 177845: Voting power change is committed
             // Thus; the light client can update header from 177840 to 177844
 
+            // The mid value for the binary search goes:
+            // 177845 -> 177842 -> 177843 -> 177844
+            assert_eq!(177840, start_block.height().value());
+            assert_eq!(177844, end_block.height().value());
+        });
+    }
+
+    #[test]
+    fn next_light_client_update_succeeds_with_mid_binary_search_same_validator_set() {
+        let test_name = function_name!();
+
+        // The tendermint_light_client library uses synchronous calls, run the tests in async block_on
+        // to avoid deadlocks. Don't use tokio's async runtime.
+        let runtime = tokio::runtime::Runtime::new().unwrap();
+        runtime.block_on(async {
+            let (_, mut client) = setup_client_with_mocked_server(test_name).await;
+            let (start_block, end_block) =
+                client.get_next_light_client_update(177840, 177846).await;
+
+            // Block 177843: Tx submitted to change voting power >66% at
+            // Block 177845: Voting power change is committed
+            // Thus; the light client can update header from 177840 to 177844
+
+            // The mid value for the binary search goes:
             assert_eq!(177840, start_block.height().value());
             assert_eq!(177844, end_block.height().value());
         });
