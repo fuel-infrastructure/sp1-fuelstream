@@ -222,4 +222,21 @@ mod tests {
             assert_eq!(177846, end_block.height().value());
         });
     }
+
+    #[test]
+    fn next_light_client_update_succeeds_with_binary_search_new_validator() {
+        let test_name = function_name!();
+
+        // The tendermint_light_client library uses synchronous calls, run the tests in async block_on
+        // to avoid deadlocks. Don't use tokio's async runtime.
+        let runtime = tokio::runtime::Runtime::new().unwrap();
+        runtime.block_on(async {
+            let (_, mut client) = setup_client_with_mocked_server(test_name).await;
+            let (start_block, end_block) =
+                client.get_next_light_client_update(198610, 198621).await;
+
+            assert_eq!(177840, start_block.height().value());
+            assert_eq!(177846, end_block.height().value());
+        });
+    }
 }
