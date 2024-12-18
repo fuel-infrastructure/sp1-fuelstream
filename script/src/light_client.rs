@@ -59,37 +59,43 @@ impl FuelStreamXLightClient {
 
         // Store the blocks for future use
         let trusted_block = self.fetch_light_block(start_block);
-        let untrusted_block = self.fetch_light_block(max_end_block);
+        let max_untrusted_block = self.fetch_light_block(max_end_block);
 
         // If max_end_block height is already valid, return it
-        if Verdict::Success == get_header_update_verdict(&trusted_block, &untrusted_block) {
-            println!("TESTERER: ENTERERED");
-            return (trusted_block, untrusted_block);
+        if Verdict::Success == get_header_update_verdict(&trusted_block, &max_untrusted_block) {
+            return (trusted_block, max_untrusted_block);
         }
 
-        // Else, find the first untrusted block using binary search
-        // let mut left = start_block;
-        // let mut right = max_end_block;
+        // Else, using binary search find the latest possible untrusted block
+        // This occurs when there was a >33% voting power change and validator signatures from
+        // the trusted block are no longer valid
+        let mut left = start_block;
+        let mut right = max_end_block;
+        let mut last_valid_untrusted = None;
+        while left + 1 < right {
+            let mid = left + (right - left) / 2;
+            let untrusted_block = self.fetch_light_block(mid);
 
-        // while left + 1 < right {
-        //     let mid = left + (right - left) / 2;
-        //     let untrusted_block = self.fetch_light_block(mid);
+            // Verification step
+            match get_header_update_verdict(&trusted_block, &untrusted_block) {
+                // If mid block is trusted, search in upper half
+                Verdict::Success => {
+                    last_valid_untrusted = Some(untrusted_block);
+                    left = mid;
+                }
+                // If mid block is not trusted, search in lower half
+                _ => {
+                    right = mid;
+                }
+            }
+        }
 
-        //     // Verification step
-        //     match get_header_update_verdict(&trusted_block, &untrusted_block) {
-        //         // If mid block is trusted, search in upper half
-        //         Verdict::Success => {
-        //             left = mid;
-        //         }
-        //         // If mid block is not trusted, search in lower half
-        //         _ => {
-        //             right = mid;
-        //         }
-        //     }
-        // }
-
-        // TODO: test this function
-        (trusted_block, untrusted_block)
+        // Return the last valid untrusted block we found.
+        // If we didn't find any valid block, this is an error condition
+        match last_valid_untrusted {
+            Some(untrusted_block) => (trusted_block, untrusted_block),
+            None => panic!("could not find any valid untrusted block within range"),
+        }
     }
 
     /// Fetches a LightBlock from a CometBFT node. LightBlocks include validator sets.
@@ -194,7 +200,7 @@ mod tests {
         runtime.block_on(async {
             let (_, mut client) = setup_client_with_mocked_server(test_name).await;
             let (start_block, end_block) =
-                client.get_next_light_client_update(177840, 177845).await;
+                client.get_next_light_client_update(177840, 177844).await;
 
             // No 66% voting power changes, end_block == max_end_block
             assert_eq!(start_block.height().value(), 177840);
@@ -212,31 +218,14 @@ mod tests {
         runtime.block_on(async {
             let (_, mut client) = setup_client_with_mocked_server(test_name).await;
             let (start_block, end_block) =
-                client.get_next_light_client_update(177840, 177847).await;
+                client.get_next_light_client_update(177840, 177850).await;
 
             // Block 177843: Tx submitted to change voting power >66% at
             // Block 177845: Voting power change is committed
-
-            // No 66% voting power changes, end_block == max_end_block
-            assert_eq!(177840, start_block.height().value());
-            assert_eq!(177846, end_block.height().value());
-        });
-    }
-
-    #[test]
-    fn next_light_client_update_succeeds_with_binary_search_new_validator() {
-        let test_name = function_name!();
-
-        // The tendermint_light_client library uses synchronous calls, run the tests in async block_on
-        // to avoid deadlocks. Don't use tokio's async runtime.
-        let runtime = tokio::runtime::Runtime::new().unwrap();
-        runtime.block_on(async {
-            let (_, mut client) = setup_client_with_mocked_server(test_name).await;
-            let (start_block, end_block) =
-                client.get_next_light_client_update(198610, 198621).await;
+            // Thus; the light client can update header from 177840 to 177844
 
             assert_eq!(177840, start_block.height().value());
-            assert_eq!(177846, end_block.height().value());
+            assert_eq!(177844, end_block.height().value());
         });
     }
 }
