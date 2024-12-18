@@ -44,8 +44,9 @@ impl FuelStreamXLightClient {
         }
     }
 
-    /// Find the next valid block the light client can iterate to. Binary search is used if
-    /// max_end_block is not already valid.
+    /// Find the next valid block the light client can iterate to. Binary search is used when
+    /// max_end_block is not already valid. This occurs when there was a >33% voting power change
+    /// and validator signatures from the trusted block are no longer valid.
     pub async fn get_next_light_client_update(
         &mut self,
         start_block: u64,
@@ -67,8 +68,6 @@ impl FuelStreamXLightClient {
         }
 
         // Else, using binary search find the latest possible untrusted block
-        // This occurs when there was a >33% voting power change and validator signatures from
-        // the trusted block are no longer valid
         let mut left = start_block;
         let mut right = max_end_block;
         let mut last_valid_untrusted = None;
@@ -91,7 +90,7 @@ impl FuelStreamXLightClient {
         }
 
         // Return the last valid untrusted block we found.
-        // If we didn't find any valid block, this is an error condition
+        // If there is no valid block, this can occur due unforeseen things such as chain re-organization
         match last_valid_untrusted {
             Some(untrusted_block) => (trusted_block, untrusted_block),
             None => panic!("could not find any valid untrusted block within range"),
