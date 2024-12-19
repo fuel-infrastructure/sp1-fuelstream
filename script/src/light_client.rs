@@ -64,7 +64,7 @@ impl FuelStreamXLightClient {
 
         // Binary search loop
         let mut curr_end_block = max_end_block;
-        while start_block + 1 < curr_end_block {
+        while start_block < curr_end_block {
             let untrusted_block = self.fetch_light_block(curr_end_block);
 
             // Verification
@@ -104,7 +104,19 @@ mod tests {
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
+    // Fixture contains:
+    // Block 177843: Tx submitted to change voting power >66% at
+    // Block 177845: Voting power change is committed
     const OVER_66_PERCENT_VOTING_POWER_CHANGE: &str = "over_66%_voting_power_change";
+
+    // The tendermint_light_client library uses synchronous calls, run the tests in async block_on
+    // to avoid deadlocks. Don't use tokio's async runtime.
+    macro_rules! run_async_test {
+        ($test_block:expr) => {{
+            let runtime = tokio::runtime::Runtime::new().unwrap();
+            runtime.block_on($test_block)
+        }};
+    }
 
     // Helper function to load JSON response from filesystem
     fn load_mock_response(fixture_name: &str, filename: &str) -> Value {
@@ -163,10 +175,7 @@ mod tests {
 
     #[test]
     fn next_light_client_update_succeeds_without_binary_search() {
-        // The tendermint_light_client library uses synchronous calls, run the tests in async block_on
-        // to avoid deadlocks. Don't use tokio's async runtime.
-        let runtime = tokio::runtime::Runtime::new().unwrap();
-        runtime.block_on(async {
+        run_async_test!(async {
             let (_, mut client) =
                 setup_client_with_mocked_server(OVER_66_PERCENT_VOTING_POWER_CHANGE).await;
             let (start_block, end_block) =
@@ -179,23 +188,31 @@ mod tests {
     }
 
     #[test]
-    fn next_light_client_update_succeeds_with_single_binary_search_loop() {
-        // The tendermint_light_client library uses synchronous calls, run the tests in async block_on
-        // to avoid deadlocks. Don't use tokio's async runtime.
-        let runtime = tokio::runtime::Runtime::new().unwrap();
-        runtime.block_on(async {
+    fn next_light_client_update_succeeds_with_binary_search_loop() {
+        run_async_test!(async {
             let (_, mut client) =
                 setup_client_with_mocked_server(OVER_66_PERCENT_VOTING_POWER_CHANGE).await;
+
+            // Single iteration, 177848 -> 177844
             let (start_block, end_block) =
                 client.get_next_light_client_update(177840, 177848).await;
 
-            // Block 177843: Tx submitted to change voting power >66% at
-            // Block 177845: Voting power change is committed
-            // Thus; the first mid-point is valid and light client can update header
-            // from 177840 to 177844
-
             assert_eq!(177840, start_block.height().value());
             assert_eq!(177844, end_block.height().value());
+
+            // Multiple iteration, 177850 -> 177845 -> 177842
+            let (start_block, end_block) =
+                client.get_next_light_client_update(177840, 177850).await;
+
+            assert_eq!(177840, start_block.height().value());
+            assert_eq!(177842, end_block.height().value());
+
+            // Multiple iteration, 177852 -> 177846 -> 177843
+            let (start_block, end_block) =
+                client.get_next_light_client_update(177840, 177852).await;
+
+            assert_eq!(177840, start_block.height().value());
+            assert_eq!(177843, end_block.height().value());
         });
     }
 
@@ -217,6 +234,33 @@ mod tests {
             // The mid value for the binary search goes:
             assert_eq!(177840, start_block.height().value());
             assert_eq!(177842, end_block.height().value());
+        });
+    }
+
+    #[test]
+    fn next_light_client_update_succeeds_next_block_is_valid() {
+        // The tendermint_light_client library uses synchronous calls, run the tests in async block_on
+        // to avoid deadlocks. Don't use tokio's async runtime.
+        let runtime = tokio::runtime::Runtime::new().unwrap();
+        runtime.block_on(async {
+            let (_, mut client) =
+                setup_client_with_mocked_server(OVER_66_PERCENT_VOTING_POWER_CHANGE).await;
+
+            // Odd validator signatures test
+
+            let (start_block, end_block) =
+                client.get_next_light_client_update(177843, 177844).await;
+
+            assert_eq!(177843, start_block.height().value());
+            assert_eq!(177844, end_block.height().value());
+
+            // New validator signatures test
+
+            let (start_block, end_block) =
+                client.get_next_light_client_update(177844, 177845).await;
+
+            assert_eq!(177844, start_block.height().value());
+            assert_eq!(177845, end_block.height().value());
         });
     }
 }
