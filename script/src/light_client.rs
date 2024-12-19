@@ -170,16 +170,16 @@ mod tests {
             let (_, mut client) =
                 setup_client_with_mocked_server(OVER_66_PERCENT_VOTING_POWER_CHANGE).await;
             let (start_block, end_block) =
-                client.get_next_light_client_update(177840, 177847).await;
+                client.get_next_light_client_update(177840, 177844).await;
 
             // No 66% voting power changes, end_block == max_end_block
-            // assert_eq!(start_block.height().value(), 177840);
-            // assert_eq!(end_block.height().value(), 177844);
+            assert_eq!(start_block.height().value(), 177840);
+            assert_eq!(end_block.height().value(), 177844);
         });
     }
 
     #[test]
-    fn next_light_client_update_succeeds_with_lower_binary_search_same_validator_set() {
+    fn next_light_client_update_succeeds_with_single_binary_search_loop() {
         // The tendermint_light_client library uses synchronous calls, run the tests in async block_on
         // to avoid deadlocks. Don't use tokio's async runtime.
         let runtime = tokio::runtime::Runtime::new().unwrap();
@@ -187,21 +187,20 @@ mod tests {
             let (_, mut client) =
                 setup_client_with_mocked_server(OVER_66_PERCENT_VOTING_POWER_CHANGE).await;
             let (start_block, end_block) =
-                client.get_next_light_client_update(177840, 177846).await;
+                client.get_next_light_client_update(177840, 177848).await;
 
             // Block 177843: Tx submitted to change voting power >66% at
             // Block 177845: Voting power change is committed
-            // Thus; the light client can update header from 177840 to 177844
+            // Thus; the first mid-point is valid and light client can update header
+            // from 177840 to 177844
 
-            // The mid value for the binary search goes:
-            // 177845 -> 177842 -> 177843 -> 177844
             assert_eq!(177840, start_block.height().value());
             assert_eq!(177844, end_block.height().value());
         });
     }
 
     #[test]
-    fn next_light_client_update_succeeds_with_mid_binary_search_same_() {
+    fn next_light_client_update_succeeds_with_multi_binary_search_loops() {
         // The tendermint_light_client library uses synchronous calls, run the tests in async block_on
         // to avoid deadlocks. Don't use tokio's async runtime.
         let runtime = tokio::runtime::Runtime::new().unwrap();
@@ -209,15 +208,15 @@ mod tests {
             let (_, mut client) =
                 setup_client_with_mocked_server(OVER_66_PERCENT_VOTING_POWER_CHANGE).await;
             let (start_block, end_block) =
-                client.get_next_light_client_update(177840, 177847).await;
+                client.get_next_light_client_update(177840, 177850).await;
 
             // Block 177843: Tx submitted to change voting power >66% at
             // Block 177845: Voting power change is committed
-            // Thus; the light client can update header from 177840 to 177844
+            // Thus; the second mid-point is valid (177850 -> 177845 -> 177842)
 
             // The mid value for the binary search goes:
             assert_eq!(177840, start_block.height().value());
-            assert_eq!(177844, end_block.height().value());
+            assert_eq!(177842, end_block.height().value());
         });
     }
 }
