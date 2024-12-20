@@ -104,10 +104,15 @@ mod tests {
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
-    // Fixture contains:
+    // Fixtures contains:
     // Block 177843: Tx submitted to change voting power >66% at
     // Block 177845: Voting power change is committed
     const OVER_66_PERCENT_VOTING_POWER_CHANGE: &str = "over_66%_voting_power_change";
+
+    // Fixtures contains:
+    // Block 215200: Tx submitted to change voting power >80% at
+    // Block 215202: Voting power change is committed
+    const OVER_85_PERCENT_VOTING_POWER_CHANGE: &str = "over_85%_voting_power_change";
 
     // The tendermint_light_client library uses synchronous calls, run the tests in async block_on
     // to avoid deadlocks. Don't use tokio's async runtime.
@@ -184,6 +189,20 @@ mod tests {
             // No 66% voting power changes, end_block == max_end_block
             assert_eq!(start_block.height().value(), 177840);
             assert_eq!(end_block.height().value(), 177844);
+
+            // Odd validator signatures test
+            let (start_block, end_block) =
+                client.get_next_light_client_update(177843, 177844).await;
+
+            assert_eq!(177843, start_block.height().value());
+            assert_eq!(177844, end_block.height().value());
+
+            // New validator signatures test
+            let (start_block, end_block) =
+                client.get_next_light_client_update(177844, 177845).await;
+
+            assert_eq!(177844, start_block.height().value());
+            assert_eq!(177845, end_block.height().value());
         });
     }
 
@@ -206,61 +225,56 @@ mod tests {
 
             assert_eq!(177840, start_block.height().value());
             assert_eq!(177842, end_block.height().value());
-
-            // Multiple iteration, 177852 -> 177846 -> 177843
-            let (start_block, end_block) =
-                client.get_next_light_client_update(177840, 177852).await;
-
-            assert_eq!(177840, start_block.height().value());
-            assert_eq!(177843, end_block.height().value());
         });
     }
 
     #[test]
-    fn next_light_client_update_succeeds_with_multi_binary_search_loops() {
-        // The tendermint_light_client library uses synchronous calls, run the tests in async block_on
-        // to avoid deadlocks. Don't use tokio's async runtime.
-        let runtime = tokio::runtime::Runtime::new().unwrap();
-        runtime.block_on(async {
+    fn next_light_client_update_succeeds_without_binary_search_over_85() {
+        run_async_test!(async {
             let (_, mut client) =
-                setup_client_with_mocked_server(OVER_66_PERCENT_VOTING_POWER_CHANGE).await;
+                setup_client_with_mocked_server(OVER_85_PERCENT_VOTING_POWER_CHANGE).await;
             let (start_block, end_block) =
-                client.get_next_light_client_update(177840, 177850).await;
+                client.get_next_light_client_update(215198, 215201).await;
 
-            // Block 177843: Tx submitted to change voting power >66% at
-            // Block 177845: Voting power change is committed
-            // Thus; the second mid-point is valid (177850 -> 177845 -> 177842)
-
-            // The mid value for the binary search goes:
-            assert_eq!(177840, start_block.height().value());
-            assert_eq!(177842, end_block.height().value());
-        });
-    }
-
-    #[test]
-    fn next_light_client_update_succeeds_next_block_is_valid() {
-        // The tendermint_light_client library uses synchronous calls, run the tests in async block_on
-        // to avoid deadlocks. Don't use tokio's async runtime.
-        let runtime = tokio::runtime::Runtime::new().unwrap();
-        runtime.block_on(async {
-            let (_, mut client) =
-                setup_client_with_mocked_server(OVER_66_PERCENT_VOTING_POWER_CHANGE).await;
+            // No 33% voting power changes, end_block == max_end_block
+            assert_eq!(start_block.height().value(), 215198);
+            assert_eq!(end_block.height().value(), 215201);
 
             // Odd validator signatures test
-
             let (start_block, end_block) =
-                client.get_next_light_client_update(177843, 177844).await;
+                client.get_next_light_client_update(215200, 215201).await;
 
-            assert_eq!(177843, start_block.height().value());
-            assert_eq!(177844, end_block.height().value());
+            assert_eq!(215200, start_block.height().value());
+            assert_eq!(215201, end_block.height().value());
 
             // New validator signatures test
-
             let (start_block, end_block) =
-                client.get_next_light_client_update(177844, 177845).await;
+                client.get_next_light_client_update(215201, 215202).await;
 
-            assert_eq!(177844, start_block.height().value());
-            assert_eq!(177845, end_block.height().value());
+            assert_eq!(215201, start_block.height().value());
+            assert_eq!(215202, end_block.height().value());
+        });
+    }
+
+    #[test]
+    fn next_light_client_update_succeeds_with_binary_search_loop_over_85() {
+        run_async_test!(async {
+            let (_, mut client) =
+                setup_client_with_mocked_server(OVER_85_PERCENT_VOTING_POWER_CHANGE).await;
+
+            // Single iteration, 215198 -> 215201
+            let (start_block, end_block) =
+                client.get_next_light_client_update(215198, 215205).await;
+
+            assert_eq!(215198, start_block.height().value());
+            assert_eq!(215201, end_block.height().value());
+
+            // Multiple iteration, 215200 -> 215202 -> 215201
+            let (start_block, end_block) =
+                client.get_next_light_client_update(215200, 215205).await;
+
+            assert_eq!(215200, start_block.height().value());
+            assert_eq!(215201, end_block.height().value());
         });
     }
 }
