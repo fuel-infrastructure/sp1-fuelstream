@@ -1,24 +1,22 @@
 use log::debug;
 use std::time::Duration;
-use tendermint::block::Block;
+use tendermint::block::Header;
 use tendermint_light_client::{
     components::io::{AtHeight, Io, ProdIo},
-    state::State,
     types::LightBlock,
-    verifier::{
-        options::Options,
-        types::{Height, Status},
-        Verdict,
-    },
+    verifier::{types::Height, Verdict},
 };
 use tendermint_rpc::{Client, HttpClient, Url};
 
 use primitives::get_header_update_verdict;
 
+/// Number of concurrent API requests to a Tendermint node
+const BATCH_SIZE: usize = 25;
+
 pub struct FuelStreamXLightClient {
     /// A Tendermint RPC client
     rpc_client: HttpClient,
-    /// Interface for fetching light blocks from a full node.
+    /// Interface for fetching light blocks from a full node
     io: Box<dyn Io>,
 }
 
@@ -44,8 +42,8 @@ impl FuelStreamXLightClient {
         }
     }
 
-    /// Find the next valid block the light client can update to. Binary search is used until a
-    /// valid target block is found when max_end_block is not already valid. This occurs when
+    /// Find the next valid block the light client can update to. Lower binary search is used until
+    /// a valid target block is found when max_end_block is not already valid. This occurs when
     /// there was a >33% voting power change and validator signatures from the trusted block
     /// are no longer valid.
     pub async fn get_next_light_client_update(
@@ -69,6 +67,11 @@ impl FuelStreamXLightClient {
 
             // Verification
             if Verdict::Success == get_header_update_verdict(&trusted_block, &untrusted_block) {
+                debug!(
+                    "next light client header update between blocks {} and {}",
+                    trusted_block.height().value(),
+                    untrusted_block.height().value()
+                );
                 return (trusted_block, untrusted_block);
             }
 
@@ -80,6 +83,48 @@ impl FuelStreamXLightClient {
             "could not find any valid untrusted block within the range block {} and {}",
             start_block, max_end_block
         );
+    }
+
+    /// Get a block header within a range, end exclusive. Does not obtain the validators' voting
+    /// power.
+    pub async fn fetch_blocks_in_range(&self, start_block: u64, end_block: u64) -> Vec<Header> {
+        assert!(start_block < end_block, "start_block > max_end_block");
+        debug!(
+            "fetching light blocks between blocks {} and {}",
+            start_block, end_block,
+        );
+
+        let mut blocks = Vec::new();
+
+        for batch_start in (start_block..end_block).step_by(BATCH_SIZE) {
+            let mut batch_futures = Vec::with_capacity(BATCH_SIZE);
+
+            // Get block commits concurrently, end exclusive
+            for height in
+                batch_start..std::cmp::min(batch_start + (BATCH_SIZE as u64) - 1, end_block)
+            {
+                batch_futures.push(async move {
+                    self.rpc_client
+                        .commit(Height::try_from(height).unwrap())
+                        .await
+                });
+            }
+
+            // Wait for all futures in the batch to complete
+            let batch_blocks = futures::future::join_all(batch_futures).await;
+            blocks.extend(
+                batch_blocks
+                    .into_iter()
+                    .map(|r| r.expect("failed to fetch block").signed_header.header),
+            );
+        }
+
+        debug!(
+            "finished fetching light blocks between blocks {} and {}",
+            start_block, end_block,
+        );
+
+        blocks
     }
 
     /// Fetches a LightBlock from a CometBFT node. LightBlocks include validator sets.
