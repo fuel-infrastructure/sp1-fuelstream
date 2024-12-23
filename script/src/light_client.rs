@@ -322,4 +322,34 @@ mod tests {
             assert_eq!(215201, end_block.height().value());
         });
     }
+
+    #[test]
+
+    fn fetch_blocks_in_range_succeeds() {
+        run_async_test!(async {
+            let (_, client) =
+                setup_client_with_mocked_server(OVER_85_PERCENT_VOTING_POWER_CHANGE).await;
+
+            let headers = client.fetch_blocks_in_range(215198, 215207).await;
+
+            // We only care about last_results_hash from the headers
+            assert_eq!(
+                headers
+                    .iter()
+                    .map(|h| h.last_results_hash.unwrap().to_string())
+                    .collect::<Vec<_>>(),
+                vec![
+                    "A764280DBA00197147BF3204DA21066B6EE8C79100890D610533F3471B645B01",
+                    "CEB59E62AC65B4E1F13BEB5507A7F94F7CAE1E282987A4FD92D5F95B70BEFAB7",
+                    "CEB59E62AC65B4E1F13BEB5507A7F94F7CAE1E282987A4FD92D5F95B70BEFAB7",
+                    "7F66114C5E082937B2CE4E4828C0CBD915C08EE0E4191A35700C88AF67BAC7DB",
+                    "D7224E4D3DA68255E2F44060EF752B8CFCECA9B07D3BE48D569ADD51624F9F97",
+                    "7A470E7513D8CA3D2B8E84FA8A009F85C7F92B902B1D1BB57BDBF886F00F65DB",
+                    "CB8F355EE7ECBD4963321EDDE78F919E6B16745F5BB64DCE1AA8E3983B5B3A00",
+                    "AD8A7992BAE27F7AFF45FA131212003B1965101FD7273BF86010E1EEC86C7407",
+                    "776BAC2BEA051A2B6F1CCDA4F0832DC44C8D1A9103B2AEFA6DFE054101FC4CDD"
+                ]
+            );
+        });
+    }
 }
