@@ -4,13 +4,12 @@ pragma solidity ^0.8.26;
 import "@blobstream/DataRootTuple.sol";
 import "@blobstream/lib/tree/binary/BinaryMerkleTree.sol";
 
-import {ISP1Blobstream} from "./interfaces/ISP1Blobstream.sol";
+import {IFuelStreamX} from "./interfaces/IFuelStreamX.sol";
 import {IDAOracle} from "@blobstream/IDAOracle.sol";
 import {TimelockedUpgradeable} from "@succinctx/upgrades/TimelockedUpgradeable.sol";
 import {ISP1Verifier} from "@sp1-contracts/ISP1Verifier.sol";
 
-/// @notice SP1Blobstream contract.
-contract SP1Blobstream is ISP1Blobstream, IDAOracle, TimelockedUpgradeable {
+contract FuelStreamX is IFuelStreamX, IDAOracle, TimelockedUpgradeable {
     /// @notice The address of the gateway contract.
     /// @dev DEPECATED: Do not use. Compatibility for upgrades from BlobstreamX.
     address public gateway_deprecated;
