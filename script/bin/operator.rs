@@ -18,6 +18,7 @@ use fuelstreamx_sp1_script::util::TendermintRPCClient;
 use fuelstreamx_sp1_script::{relay, TendermintProver};
 use log::{error, info};
 use primitives::get_header_update_verdict;
+use primitives::types::ProofInputs;
 use sp1_sdk::{
     HashableKey, ProverClient, SP1ProofWithPublicValues, SP1ProvingKey, SP1Stdin, SP1VerifyingKey,
 };
@@ -319,6 +320,8 @@ fn get_block_update_interval() -> u64 {
 async fn main() {
     dotenv::dotenv().ok();
     env_logger::init();
+
+    // -------- Ethereum Config
 
     let operator = SP1BlobstreamOperator::new().await;
 

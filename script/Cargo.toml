@@ -4,10 +4,6 @@ name = "fuelstreamx-sp1-script"
 edition = "2021"
 
 [[bin]]
-name = "test"
-path = "bin/test.rs"
-
-[[bin]]
 name = "genesis"
 path = "bin/genesis.rs"
 
@@ -18,10 +14,6 @@ path = "bin/operator.rs"
 [[bin]]
 name = "vkey"
 path = "bin/vkey.rs"
-
-[[bin]]
-name = "costs"
-path = "bin/costs.rs"
 
 [dependencies]
 primitives = { path = "../primitives" }

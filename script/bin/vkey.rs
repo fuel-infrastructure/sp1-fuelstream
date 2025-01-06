@@ -7,8 +7,8 @@
 //!
 //!
 //!
+use fuelstreamx_sp1_script::BLOBSTREAMX_ELF;
 use sp1_sdk::{HashableKey, ProverClient};
-const FUELSTREAMX_ELF: &[u8] = include_bytes!("../../elf/fuelstreamx-elf");
 
 #[tokio::main]
 pub async fn main() {
