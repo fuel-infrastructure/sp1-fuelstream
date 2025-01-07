@@ -2,20 +2,12 @@
 sp1_zkvm::entrypoint!(main);
 
 use alloy::primitives::B256;
-use alloy::sol;
 use alloy::sol_types::SolType;
 use primitives::get_header_update_verdict;
-use primitives::types::ProofInputs;
-use primitives::types::ProofOutputs;
+use primitives::types::{BridgeCommitmentLeaf, ProofInputs, ProofOutputs};
 use sha2::Sha256;
 use tendermint::{block::Header, merkle::simple_hash_from_byte_vectors};
 use tendermint_light_client_verifier::Verdict;
-
-/// Follows the structure as defined in:
-/// https://github.com/fuel-infrastructure/fuel-sequencer/blob/538bcdb449ba86f3db6d774c37d99056aa877f80/proto/fuelsequencer/commitments/types.proto#L9
-type BridgeCommitmentLeaf = sol! {
-    tuple(uint64, bytes32)
-};
 
 /// Compute the bridge commitment for the supplied headers. Each leaf in the Tendermint Merkle tree
 /// is the SHA256 hash of the concatenation of the block height and the header's last

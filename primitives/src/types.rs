@@ -3,11 +3,14 @@ use serde::{Deserialize, Serialize};
 use tendermint::block::Header;
 use tendermint_light_client_verifier::types::LightBlock;
 
-/// uint256 trusted_block;
-/// bytes32 trusted_header_hash;
-/// uint256 target_block;
-/// bytes32 target_header_hash;
-/// bytes32 bridge_commitment;
+/// Follows the structure as defined in:
+/// https://github.com/fuel-infrastructure/fuel-sequencer/blob/538bcdb449ba86f3db6d774c37d99056aa877f80/proto/fuelsequencer/commitments/types.proto#L9
+pub type BridgeCommitmentLeaf = sol! {
+    tuple(uint64, bytes32)
+};
+
+/// Follows the structure as defined in:
+/// TODO: link
 pub type ProofOutputs = sol! {
     tuple(uint64, bytes32, uint64, bytes32, bytes32)
 };
