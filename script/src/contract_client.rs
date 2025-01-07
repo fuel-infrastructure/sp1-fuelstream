@@ -6,7 +6,7 @@ use alloy::{
             BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller,
             WalletFiller,
         },
-        Identity, Provider, ProviderBuilder, RootProvider,
+        Identity, ProviderBuilder, RootProvider,
     },
     signers::local::PrivateKeySigner,
     sol,
@@ -14,6 +14,7 @@ use alloy::{
 };
 use FuelStreamX::FuelStreamXInstance;
 
+// TODO: link
 sol! {
     #[sol(rpc)]
     contract FuelStreamX {

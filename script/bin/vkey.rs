@@ -1,13 +1,7 @@
 //! To build the binary:
 //!
 //!     `cargo build --release --bin vkey`
-//!
-//!
-//!
-//!
-//!
-//!
-use fuelstreamx_sp1_script::BLOBSTREAMX_ELF;
+use primitives::types::FUELSTREAMX_ELF;
 use sp1_sdk::{HashableKey, ProverClient};
 
 #[tokio::main]

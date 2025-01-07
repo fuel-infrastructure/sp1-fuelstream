@@ -3,6 +3,9 @@ use serde::{Deserialize, Serialize};
 use tendermint::block::Header;
 use tendermint_light_client_verifier::types::LightBlock;
 
+/// The compiled ELF binary for the FuelStreamX circuit
+pub const FUELSTREAMX_ELF: &[u8] = include_bytes!("../../elf/fuelstreamx-elf");
+
 /// Follows the structure as defined in:
 /// https://github.com/fuel-infrastructure/fuel-sequencer/blob/538bcdb449ba86f3db6d774c37d99056aa877f80/proto/fuelsequencer/commitments/types.proto#L9
 pub type BridgeCommitmentLeaf = sol! {
