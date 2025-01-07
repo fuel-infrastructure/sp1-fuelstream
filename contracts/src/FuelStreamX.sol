@@ -2,10 +2,9 @@
 pragma solidity ^0.8.26;
 
 import {IFuelStreamX} from "./interfaces/IFuelStreamX.sol";
-import {TimelockedUpgradeable} from "@succinctx/upgrades/TimelockedUpgradeable.sol";
 import {ISP1Verifier} from "@sp1-contracts/ISP1Verifier.sol";
 
-contract FuelStreamX is IFuelStreamX, TimelockedUpgradeable {
+contract FuelStreamX is IFuelStreamX {
     /// @notice The block is the first one in the next data commitment.
     uint64 public latestBlock;
 
@@ -31,13 +30,7 @@ contract FuelStreamX is IFuelStreamX, TimelockedUpgradeable {
     /// @notice The deployed SP1 verifier contract, handled by Succinct Labs.
     ISP1Verifier public verifier;
 
-    struct InitParameters {
-        uint64 height;
-        bytes32 headerHash;
-        bytes32 vKey;
-        address verifier;
-    }
-
+    // @notice The ABI encoded proof exposed outputs.
     struct ProofOutputs {
         uint64 trustedBlock;
         bytes32 trustedHeaderHash;
@@ -46,34 +39,28 @@ contract FuelStreamX is IFuelStreamX, TimelockedUpgradeable {
         bytes32 bridgeCommitment;
     }
 
-    function VERSION() external pure override returns (string memory) {
-        return "1.1.0";
-    }
-
-    /// @dev Initializes the contract.
-    /// @param _params The initialization parameters.
-    function initialize(InitParameters calldata _params) external initializer {
-        blockHeightToHeaderHash[_params.height] = _params.headerHash;
-        latestBlock = _params.height;
-        vKey = _params.vKey;
-        verifier = ISP1Verifier(_params.verifier);
+    constructor(uint64 _height, bytes32 _headerHash, bytes32 _vKey, address _verifier) {
+        latestBlock = _height;
+        blockHeightToHeaderHash[_height] = _headerHash;
+        vKey = _vKey;
+        verifier = ISP1Verifier(_verifier);
 
         state_proofNonce = 1;
     }
 
     /// @notice Only the guardian can update the genesis state of the light client.
-    function updateGenesisState(uint32 _height, bytes32 _header) external onlyGuardian {
+    function updateGenesisState(uint32 _height, bytes32 _header) external {
         blockHeightToHeaderHash[_height] = _header;
         latestBlock = _height;
     }
 
     /// @notice Only the guardian can update the verifier contract.
-    function updateVerifier(address _verifier) external onlyGuardian {
+    function updateVerifier(address _verifier) external {
         verifier = ISP1Verifier(_verifier);
     }
 
     /// @notice Only the guardian can update the program vkey.
-    function updateProgramVkey(bytes32 _programVkey) external onlyGuardian {
+    function updateProgramVkey(bytes32 _programVkey) external {
         vKey = _programVkey;
     }
 

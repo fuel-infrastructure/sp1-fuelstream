@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import "@blobstream/DataRootTuple.sol";
-import "@blobstream/lib/tree/binary/BinaryMerkleTree.sol";
-
 interface IFuelStreamX {
     /// @notice Emits event with the new head update.
     event HeadUpdate(uint64 blockNumber, bytes32 headerHash);
