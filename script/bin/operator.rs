@@ -13,8 +13,8 @@ use alloy::{
     transports::http::{Client, Http},
 };
 use anyhow::Result;
+use fuelstreamx_sp1_script::contract_client::FuelStreamXContractClient;
 use fuelstreamx_sp1_script::light_client::FuelStreamXLightClient;
-use fuelstreamx_sp1_script::util::TendermintRPCClient;
 use fuelstreamx_sp1_script::{relay, TendermintProver};
 use log::{error, info};
 use primitives::get_header_update_verdict;
@@ -26,51 +26,6 @@ use std::env;
 use std::sync::Arc;
 use std::time::Duration;
 use tendermint_light_client_verifier::Verdict;
-
-const ELF: &[u8] = include_bytes!("../../elf/fuelstreamx-elf");
-
-/// Alias the fill provider for the Ethereum network. Retrieved from the instantiation of the
-/// ProviderBuilder. Recommended method for passing around a ProviderBuilder.
-type EthereumFillProvider = FillProvider<
-    JoinFill<
-        JoinFill<
-            Identity,
-            JoinFill<GasFiller, JoinFill<BlobGasFiller, JoinFill<NonceFiller, ChainIdFiller>>>,
-        >,
-        WalletFiller<EthereumWallet>,
-    >,
-    RootProvider<Http<Client>>,
-    Http<Client>,
-    Ethereum,
->;
-
-struct SP1BlobstreamOperator {
-    client: ProverClient,
-    pk: SP1ProvingKey,
-    vk: SP1VerifyingKey,
-    wallet_filler: Arc<EthereumFillProvider>,
-    contract_address: Address,
-    relayer_address: Address,
-    chain_id: u64,
-    use_kms_relayer: bool,
-}
-
-sol! {
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    contract SP1Blobstream {
-        bool public frozen;
-        uint64 public latestBlock;
-        uint256 public state_proofNonce;
-        mapping(uint64 => bytes32) public blockHeightToHeaderHash;
-        mapping(uint256 => bytes32) public state_dataCommitments;
-        uint64 public constant DATA_COMMITMENT_MAX = 10000;
-        bytes32 public blobstreamProgramVkey;
-        address public verifier;
-
-        function commitHeaderRange(bytes calldata proof, bytes calldata publicValues) external;
-    }
-}
 
 // Timeout for the proof in seconds.
 const PROOF_TIMEOUT_SECONDS: u64 = 60 * 30;
@@ -320,6 +275,24 @@ fn get_block_update_interval() -> u64 {
 async fn main() {
     dotenv::dotenv().ok();
     env_logger::init();
+
+    // -------- Ethereum Config
+
+    let ethereum_rpc_url = env::var("ETHEREUM_RPC_URL").expect("ETHEREUM_RPC_URL not set");
+    let private_key = env::var("PRIVATE_KEY").expect("PRIVATE_KEY not set");
+    let contract_address = env::var("CONTRACT_ADDRESS").expect("CONTRACT_ADDRESS not set");
+
+    let ethereum_light_client = FuelStreamXContractClient::new(
+        ethereum_rpc_url.as_str(),
+        private_key.as_str(),
+        contract_address.as_str(),
+    )
+    .await;
+}
+
+#[tokio::main]
+async fn main() {
+    dotenv::dotenv().ok();
 
     // -------- Ethereum Config
 
