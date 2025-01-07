@@ -1,6 +1,6 @@
 //! To build the binary:
 //!
-//!     `cargo build --release --bin vkey`
+//!     `cargo run --release --bin vkey`
 use primitives::types::FUELSTREAMX_ELF;
 use sp1_sdk::{HashableKey, ProverClient};
 

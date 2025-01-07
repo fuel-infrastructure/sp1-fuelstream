@@ -11,6 +11,7 @@ Inside ../script/, run `RUST_LOG=info cargo run --release --bin genesis` to gene
 - `GENESIS_HEIGHT` - Height of the block at which the contract will be deployed.
 - `GENESIS_HEADER` - Header of the block at which the contract will be deployed.
 - `VKEY` - The verification key for the ZK circuit.
+- `SP1_VERIFIER_ADDRESS` - The Plonk verifier address, handled by Succinct Labs.
 
 Then run the following command:
 
