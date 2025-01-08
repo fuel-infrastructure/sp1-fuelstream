@@ -16,18 +16,18 @@ use alloy::{
     transports::http::{Client, Http},
 };
 use anyhow::Result;
+use core::str::FromStr;
 use fuelstreamx_sp1_script::contract_client::FuelStreamXContractClient;
 use fuelstreamx_sp1_script::light_client::FuelStreamXLightClient;
+use fuelstreamx_sp1_script::plonk_client::FuelStreamXPlonkClient;
 use log::{error, info};
 use primitives::get_header_update_verdict;
 use primitives::types::ProofInputs;
-use sp1_sdk::{
-    HashableKey, ProverClient, SP1ProofWithPublicValues, SP1ProvingKey, SP1Stdin, SP1VerifyingKey,
-};
 use std::env;
 use std::sync::Arc;
 use std::time::Duration;
 use tendermint_light_client_verifier::Verdict;
+use tendermint_rpc::Url;
 
 // Timeout for the proof in seconds.
 const PROOF_TIMEOUT_SECONDS: u64 = 60 * 30;
@@ -273,25 +273,55 @@ const NUM_RELAY_RETRIES: u32 = 3;
 //     block_update_interval
 // }
 
+struct FuelStreamXOperator {
+    ethereum_light_client: FuelStreamXContractClient,
+    tendermint_client: FuelStreamXLightClient,
+    plonk_client: FuelStreamXPlonkClient,
+}
+
+impl FuelStreamXOperator {
+    /// Constructs a new FuelStreamX operator
+    pub async fn new() -> Self {
+        // -------- Ethereum Config
+
+        let ethereum_rpc_url = env::var("RPC_URL").expect("RPC_URL not set");
+        let private_key = env::var("PRIVATE_KEY").expect("PRIVATE_KEY not set");
+        let contract_address = env::var("CONTRACT_ADDRESS").expect("CONTRACT_ADDRESS not set");
+
+        let ethereum_light_client = FuelStreamXContractClient::new(
+            ethereum_rpc_url.as_str(),
+            private_key.as_str(),
+            contract_address.as_str(),
+        )
+        .await;
+
+        // -------- Tendermint Config
+
+        let tendermint_rpc_url_env =
+            env::var("TENDERMINT_RPC_URL").expect("TENDERMINT_RPC_URL not set");
+        let tendermint_rpc_url = Url::from_str(&tendermint_rpc_url_env)
+            .expect("failed to parse TENDERMINT_RPC_URL string");
+
+        let light_client = FuelStreamXLightClient::new(tendermint_rpc_url).await;
+
+        // -------- SP1 Config
+
+        let plonk_client = FuelStreamXPlonkClient::new().await;
+
+        Self {
+            ethereum_light_client,
+            tendermint_client: light_client,
+            plonk_client,
+        }
+    }
+}
+
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().ok();
     env_logger::init();
 
-    // -------- Ethereum Config
-
-    let ethereum_rpc_url = env::var("RPC_URL").expect("RPC_URL not set");
-    let private_key = env::var("PRIVATE_KEY").expect("PRIVATE_KEY not set");
-    let contract_address = env::var("CONTRACT_ADDRESS").expect("CONTRACT_ADDRESS not set");
-
-    let ethereum_light_client = FuelStreamXContractClient::new(
-        ethereum_rpc_url.as_str(),
-        private_key.as_str(),
-        contract_address.as_str(),
-    )
-    .await;
-
-    println!("{:?}", ethereum_light_client.get_latest_sync().await);
+    let operator = FuelStreamXOperator::new().await;
 }
 
 // #[tokio::main]

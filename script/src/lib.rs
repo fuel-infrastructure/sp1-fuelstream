@@ -1,5 +1,6 @@
 pub mod contract_client;
 pub mod light_client;
+pub mod plonk_client;
 pub mod relay;
 
 // The path to the ELF file for the Succinct zkVM program.
