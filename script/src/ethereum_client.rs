@@ -44,14 +44,14 @@ type EthereumFillProvider = FillProvider<
     Ethereum,
 >;
 
-pub struct FuelStreamXContractClient {
+pub struct FuelStreamXEthereumClient {
     /// Exposes Ethereum JSON-RPC methods with an Ethereum wallet already configured
     provider: EthereumFillProvider,
     /// FuelStreamX contract instance, connected with the provider
     contract: FuelStreamXInstance<Http<Client>, EthereumFillProvider>,
 }
 
-impl FuelStreamXContractClient {
+impl FuelStreamXEthereumClient {
     /// Constructs a new FuelStreamX contract client
     pub async fn new(rpc_url: &str, private_key: &str, contract_address: &str) -> Self {
         // The wallet handling the submitting of proofs on Ethereum
@@ -69,7 +69,7 @@ impl FuelStreamXContractClient {
             .expect("address does not have a valid checksum");
         let contract = FuelStreamX::new(address, provider.clone());
 
-        FuelStreamXContractClient { provider, contract }
+        Self { provider, contract }
     }
 
     /// Get the maximum bridge commitment range allowed

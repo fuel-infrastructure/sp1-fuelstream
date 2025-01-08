@@ -17,9 +17,9 @@ use alloy::{
 };
 use anyhow::Result;
 use core::str::FromStr;
-use fuelstreamx_sp1_script::contract_client::FuelStreamXContractClient;
-use fuelstreamx_sp1_script::light_client::FuelStreamXLightClient;
+use fuelstreamx_sp1_script::ethereum_client::FuelStreamXEthereumClient;
 use fuelstreamx_sp1_script::plonk_client::FuelStreamXPlonkClient;
+use fuelstreamx_sp1_script::tendermint_client::FuelStreamXTendermintClient;
 use log::{error, info};
 use primitives::get_header_update_verdict;
 use primitives::types::ProofInputs;
@@ -274,13 +274,13 @@ const NUM_RELAY_RETRIES: u32 = 3;
 // }
 
 struct FuelStreamXOperator {
-    ethereum_light_client: FuelStreamXContractClient,
-    tendermint_client: FuelStreamXLightClient,
+    ethereum_client: FuelStreamXEthereumClient,
+    tendermint_client: FuelStreamXTendermintClient,
     plonk_client: FuelStreamXPlonkClient,
 }
 
 impl FuelStreamXOperator {
-    /// Constructs a new FuelStreamX operator
+    /// Constructs a new FuelStreamX operator. Expects that the .env file is loaded
     pub async fn new() -> Self {
         // -------- Ethereum Config
 
@@ -288,7 +288,7 @@ impl FuelStreamXOperator {
         let private_key = env::var("PRIVATE_KEY").expect("PRIVATE_KEY not set");
         let contract_address = env::var("CONTRACT_ADDRESS").expect("CONTRACT_ADDRESS not set");
 
-        let ethereum_light_client = FuelStreamXContractClient::new(
+        let ethereum_client = FuelStreamXEthereumClient::new(
             ethereum_rpc_url.as_str(),
             private_key.as_str(),
             contract_address.as_str(),
@@ -302,15 +302,15 @@ impl FuelStreamXOperator {
         let tendermint_rpc_url = Url::from_str(&tendermint_rpc_url_env)
             .expect("failed to parse TENDERMINT_RPC_URL string");
 
-        let light_client = FuelStreamXLightClient::new(tendermint_rpc_url).await;
+        let tendermint_client = FuelStreamXTendermintClient::new(tendermint_rpc_url).await;
 
         // -------- SP1 Config
 
         let plonk_client = FuelStreamXPlonkClient::new().await;
 
         Self {
-            ethereum_light_client,
-            tendermint_client: light_client,
+            ethereum_client,
+            tendermint_client,
             plonk_client,
         }
     }

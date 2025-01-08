@@ -10,7 +10,6 @@
 use std::env;
 
 use clap::Parser;
-use fuelstreamx_sp1_script::BLOBSTREAMX_ELF;
 use log::info;
 use sp1_sdk::{HashableKey, ProverClient};
 

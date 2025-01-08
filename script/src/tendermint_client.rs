@@ -13,14 +13,14 @@ use primitives::get_header_update_verdict;
 /// Number of concurrent API requests to a Tendermint node
 const BATCH_SIZE: usize = 25;
 
-pub struct FuelStreamXLightClient {
+pub struct FuelStreamXTendermintClient {
     /// A Tendermint RPC client
     rpc_client: HttpClient,
     /// Interface for fetching light blocks from a full node
     io: Box<dyn Io>,
 }
 
-impl FuelStreamXLightClient {
+impl FuelStreamXTendermintClient {
     /// Constructs a new FuelStreamX light client
     pub async fn new(tendermint_rpc: Url) -> Self {
         let rpc_client =
