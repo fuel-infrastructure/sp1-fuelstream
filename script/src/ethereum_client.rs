@@ -1,6 +1,6 @@
 use alloy::{
     network::{Ethereum, EthereumWallet},
-    primitives::{Address, B256, U256},
+    primitives::{Address, B256},
     providers::{
         fillers::{
             BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller,
@@ -21,6 +21,7 @@ sol! {
         uint64 public constant BRIDGE_COMMITMENT_MAX;
         uint64 public latestBlock;
         mapping(uint64 => bytes32) public blockHeightToHeaderHash;
+        bytes32 public vKey;
 
         function commitHeaderRange(
             bytes calldata proof,
@@ -103,5 +104,15 @@ impl FuelStreamXEthereumClient {
             ._0;
 
         (latest_height, latest_block_header)
+    }
+
+    /// Get the verification key for the ZK circuit.
+    pub async fn get_v_key(&self) -> B256 {
+        self.contract
+            .vKey()
+            .call()
+            .await
+            .expect("failed to get vKey")
+            .vKey
     }
 }

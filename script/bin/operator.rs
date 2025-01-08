@@ -35,48 +35,6 @@ const PROOF_TIMEOUT_SECONDS: u64 = 60 * 30;
 const NUM_RELAY_RETRIES: u32 = 3;
 
 // impl SP1BlobstreamOperator {
-//     pub async fn new() -> Self {
-//         dotenv::dotenv().ok();
-
-//         let client = ProverClient::new();
-//         let (pk, vk) = client.setup(ELF);
-//         let use_kms_relayer: bool = env::var("USE_KMS_RELAYER")
-//             .unwrap_or("false".to_string())
-//             .parse()
-//             .unwrap();
-//         let chain_id: u64 = env::var("CHAIN_ID")
-//             .expect("CHAIN_ID not set")
-//             .parse()
-//             .unwrap();
-//         let rpc_url = env::var("RPC_URL")
-//             .expect("RPC_URL not set")
-//             .parse()
-//             .unwrap();
-
-//         let private_key = env::var("PRIVATE_KEY").expect("PRIVATE_KEY not set");
-//         let contract_address = env::var("CONTRACT_ADDRESS")
-//             .expect("CONTRACT_ADDRESS not set")
-//             .parse()
-//             .unwrap();
-//         let signer: PrivateKeySigner = private_key.parse().expect("Failed to parse private key");
-//         let relayer_address = signer.address();
-//         let wallet = EthereumWallet::from(signer);
-//         let provider = ProviderBuilder::new()
-//             .with_recommended_fillers()
-//             .wallet(wallet)
-//             .on_http(rpc_url);
-
-//         Self {
-//             client,
-//             pk,
-//             vk,
-//             wallet_filler: Arc::new(provider),
-//             chain_id,
-//             contract_address,
-//             relayer_address,
-//             use_kms_relayer,
-//         }
-//     }
 
 //     /// Check the verifying key in the contract matches the verifying key in the prover.
 //     async fn check_vkey(&self) -> Result<()> {
@@ -314,6 +272,20 @@ impl FuelStreamXOperator {
             plonk_client,
         }
     }
+
+    /// Check the verifying key in the contract matches the verifying key in the prover.
+    async fn check_vkey(&self) -> Result<()> {
+        let ethereum_v_key = self.ethereum_client.get_v_key().await;
+        let prover_v_key = self.plonk_client.get_vkey_hash();
+
+        if ethereum_v_key.to_string() != prover_v_key {
+            return Err(anyhow::anyhow!(
+                "the verifying key of the elf does not match the verifying key in the contract"
+            ));
+        }
+
+        Ok(())
+    }
 }
 
 #[tokio::main]
@@ -322,6 +294,7 @@ async fn main() {
     env_logger::init();
 
     let operator = FuelStreamXOperator::new().await;
+    operator.check_vkey().await.expect("vKey does not match")
 }
 
 // #[tokio::main]

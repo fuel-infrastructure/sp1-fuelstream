@@ -15,7 +15,7 @@ impl FuelStreamXPlonkClient {
         Self { pk, vk }
     }
 
-    pub fn get_vkey_hash(self) -> String {
+    pub fn get_vkey_hash(&self) -> String {
         self.vk.bytes32()
     }
 }
