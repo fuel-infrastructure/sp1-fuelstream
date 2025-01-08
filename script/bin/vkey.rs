@@ -1,12 +1,15 @@
 //! To run the binary:
 //!
 //!     `cargo run --release --bin vkey`
-use primitives::types::FUELSTREAMX_ELF;
-use sp1_sdk::{HashableKey, ProverClient};
+use fuelstreamx_sp1_script::plonk_client::FuelStreamXPlonkClient;
+use log::info;
+use std::env;
 
 #[tokio::main]
 pub async fn main() {
-    let client = ProverClient::new();
-    let (_pk, vk) = client.setup(FUELSTREAMX_ELF);
-    println!("fuelstreamx-elf VK: {}", vk.bytes32());
+    env::set_var("RUST_LOG", "info");
+    env_logger::init();
+
+    let plonk_client = FuelStreamXPlonkClient::new().await;
+    info!("VKEY={}\n", plonk_client.get_vkey_hash());
 }

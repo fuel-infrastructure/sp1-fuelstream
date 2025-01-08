@@ -1,11 +1,6 @@
 //! To run the binary:
 //!
 //!     `cargo run --release --bin genesis -- --block <height>`
-//!
-//!
-//!
-//!
-//!
 use alloy::primitives::hex::encode_prefixed;
 use clap::Parser;
 use core::str::FromStr;
