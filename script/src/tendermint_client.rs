@@ -128,7 +128,7 @@ impl FuelStreamXTendermintClient {
     }
 
     /// Fetches a LightBlock from a Tendermint node. LightBlocks include validator sets.
-    fn fetch_light_block(&mut self, block_height: u64) -> LightBlock {
+    pub fn fetch_light_block(&mut self, block_height: u64) -> LightBlock {
         debug!("fetching block {} from a Tendermint node", block_height);
         let error_msg = format!("could not request light block {}", block_height);
 

@@ -1,5 +1,5 @@
 use primitives::types::FUELSTREAMX_ELF;
-use sp1_sdk::{ProverClient, SP1ProvingKey, SP1VerifyingKey};
+use sp1_sdk::{HashableKey, ProverClient, SP1ProvingKey, SP1VerifyingKey};
 
 pub struct FuelStreamXPlonkClient {
     pk: SP1ProvingKey,
@@ -13,5 +13,9 @@ impl FuelStreamXPlonkClient {
         let (pk, vk) = prover_client.setup(FUELSTREAMX_ELF);
 
         Self { pk, vk }
+    }
+
+    pub fn get_vkey_hash(self) -> String {
+        self.vk.bytes32()
     }
 }

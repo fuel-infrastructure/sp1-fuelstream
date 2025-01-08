@@ -1,53 +1,55 @@
-//! To build the binary:
+//! To run the binary:
 //!
-//!     `cargo build --release --bin genesis`
-//!
-//!
+//!     `cargo run --release --bin genesis -- --block <height>`
 //!
 //!
 //!
-
-use std::env;
-
+//!
+//!
+use alloy::primitives::hex::encode_prefixed;
 use clap::Parser;
+use core::str::FromStr;
+use fuelstreamx_sp1_script::plonk_client::FuelStreamXPlonkClient;
+use fuelstreamx_sp1_script::tendermint_client::FuelStreamXTendermintClient;
 use log::info;
-use sp1_sdk::{HashableKey, ProverClient};
+use std::env;
+use tendermint_rpc::Url;
 
 #[derive(Parser, Debug, Clone)]
-#[command(about = "Get the genesis parameters from a block.")]
+#[command(about = "Get the genesis parameters from a given block.")]
 pub struct GenesisArgs {
     #[arg(long)]
-    pub block: Option<u64>,
+    pub block: u64,
 }
 
 #[tokio::main]
 pub async fn main() {
     env::set_var("RUST_LOG", "info");
+
     dotenv::dotenv().ok();
     env_logger::init();
-    let data_fetcher = TendermintRPCClient::default();
     let args = GenesisArgs::parse();
 
-    let client = ProverClient::new();
-    let (_pk, vk) = client.setup(BLOBSTREAMX_ELF);
+    // -------- Tendermint Config
 
-    if let Some(block) = args.block {
-        let header_hash = data_fetcher.fetch_header_hash(block).await;
-        info!(
-            "\nGENESIS_HEIGHT={:?}\nGENESIS_HEADER={}\nSP1_BLOBSTREAM_PROGRAM_VKEY={}\n",
-            block,
-            header_hash.to_string(),
-            vk.bytes32(),
-        );
-    } else {
-        let latest_block_height = data_fetcher.get_latest_block_height().await;
-        let header_hash = data_fetcher.fetch_header_hash(latest_block_height).await;
+    let tendermint_rpc_url_env =
+        env::var("TENDERMINT_RPC_URL").expect("TENDERMINT_RPC_URL not set");
+    let tendermint_rpc_url =
+        Url::from_str(&tendermint_rpc_url_env).expect("failed to parse TENDERMINT_RPC_URL string");
 
-        info!(
-            "\nGENESIS_HEIGHT={:?}\nGENESIS_HEADER={}\nSP1_BLOBSTREAM_PROGRAM_VKEY={}\n",
-            latest_block_height,
-            header_hash.to_string(),
-            vk.bytes32(),
-        );
-    }
+    let mut tendermint_client = FuelStreamXTendermintClient::new(tendermint_rpc_url).await;
+
+    // -------- SP1 Config
+
+    let plonk_client = FuelStreamXPlonkClient::new().await;
+
+    // -------- Run
+
+    let block = tendermint_client.fetch_light_block(args.block);
+    info!(
+        "\nGENESIS_HEIGHT={:?}\nGENESIS_HEADER={}\nVKEY={}\n",
+        block.height().value(),
+        encode_prefixed(block.signed_header.header.hash()),
+        plonk_client.get_vkey_hash()
+    );
 }
