@@ -1,4 +1,4 @@
-//! To build the binary:
+//! To run the binary:
 //!
 //!     `cargo run --release --bin vkey`
 use primitives::types::FUELSTREAMX_ELF;

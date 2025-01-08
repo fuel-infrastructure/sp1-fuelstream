@@ -18,9 +18,9 @@ use FuelStreamX::FuelStreamXInstance;
 sol! {
     #[sol(rpc)]
     contract FuelStreamX {
-        uint256 public constant BRIDGE_COMMITMENT_MAX;
-        uint256 public latestHeight;
-        bytes32 public latestBlockHeader;
+        uint64 public constant BRIDGE_COMMITMENT_MAX;
+        uint64 public latestBlock;
+        mapping(uint64 => bytes32) public blockHeightToHeaderHash;
 
         function commitHeaderRange(
             bytes calldata proof,
@@ -73,7 +73,7 @@ impl FuelStreamXContractClient {
     }
 
     /// Get the maximum bridge commitment range allowed
-    pub async fn get_bridge_commitment_max(&self) -> U256 {
+    pub async fn get_bridge_commitment_max(&self) -> u64 {
         self.contract
             .BRIDGE_COMMITMENT_MAX()
             .call()
@@ -83,24 +83,24 @@ impl FuelStreamXContractClient {
     }
 
     /// Get the latest block sync of the light client on Ethereum
-    pub async fn get_latest_sync(&self) -> (U256, B256) {
+    pub async fn get_latest_sync(&self) -> (u64, B256) {
         // Get the latest trusted height
         let latest_height = self
             .contract
-            .latestHeight()
+            .latestBlock()
             .call()
             .await
             .expect("failed to get latest height from contract")
-            .latestHeight;
+            .latestBlock;
 
         // Get the block header hash for the latest trusted height
         let latest_block_header = self
             .contract
-            .latestBlockHeader()
+            .blockHeightToHeaderHash(latest_height)
             .call()
             .await
             .expect("failed to get latest block header hash from contract")
-            .latestBlockHeader;
+            ._0;
 
         (latest_height, latest_block_header)
     }
