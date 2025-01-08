@@ -15,7 +15,7 @@ const BATCH_SIZE: usize = 25;
 
 pub struct FuelStreamXTendermintClient {
     /// A Tendermint RPC client
-    rpc_client: HttpClient,
+    pub rpc_client: HttpClient,
     /// Interface for fetching light blocks from a full node
     io: Box<dyn Io>,
 }
@@ -33,7 +33,7 @@ impl FuelStreamXTendermintClient {
             .node_info
             .id;
 
-        let timeout = Some(Duration::from_secs(3));
+        let timeout = Some(Duration::from_secs(10));
         let io = ProdIo::new(peer_id, rpc_client.clone(), timeout);
 
         Self {

@@ -1,7 +1,7 @@
 //! To run the binary:
 //!
 //!     `cargo run --release --bin genesis -- --block <height>`
-use alloy::primitives::hex::encode_prefixed;
+use alloy::primitives::B256;
 use clap::Parser;
 use core::str::FromStr;
 use fuelstreamx_sp1_script::plonk_client::FuelStreamXPlonkClient;
@@ -36,7 +36,7 @@ pub async fn main() {
 
     // -------- SP1 Config
 
-    let plonk_client = FuelStreamXPlonkClient::new().await;
+    let plonk_client = FuelStreamXPlonkClient::new(0).await;
 
     // -------- Run
 
@@ -44,7 +44,7 @@ pub async fn main() {
     info!(
         "\nGENESIS_HEIGHT={:?}\nGENESIS_HEADER={}\nVKEY={}\n",
         block.height().value(),
-        encode_prefixed(block.signed_header.header.hash()),
-        plonk_client.get_vkey_hash()
+        B256::from_slice(block.signed_header.header.hash().as_bytes()),
+        plonk_client.get_v_key_hash()
     );
 }

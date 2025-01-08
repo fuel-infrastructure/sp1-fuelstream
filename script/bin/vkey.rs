@@ -10,6 +10,6 @@ pub async fn main() {
     env::set_var("RUST_LOG", "info");
     env_logger::init();
 
-    let plonk_client = FuelStreamXPlonkClient::new().await;
-    info!("VKEY={}\n", plonk_client.get_vkey_hash());
+    let plonk_client = FuelStreamXPlonkClient::new(0).await;
+    info!("VKEY={}\n", plonk_client.get_v_key_hash());
 }
