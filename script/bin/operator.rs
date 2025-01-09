@@ -193,7 +193,7 @@ impl FuelStreamXOperator {
             })
             .unwrap_or(60);
 
-        let plonk_client = FuelStreamXPlonkClient::new(sp1_timeout).await;
+        let plonk_client = FuelStreamXPlonkClient::new(sp1_timeout * 60).await;
 
         Self {
             ethereum_client,
@@ -260,16 +260,10 @@ impl FuelStreamXOperator {
             return Ok(());
         }
 
-        // Get inputs
-
-        //         let inputs = prover
-        //             .fetch_input_for_blobstream_proof(trusted_block, target_block)
-        //             .await;
-
-        //         // Simulate the step from the trusted block to the target block.
-        //         let verdict =
-        //             get_header_update_verdict(&inputs.trusted_light_block, &inputs.target_light_block);
-        //         assert_eq!(verdict, Verdict::Success);
+        // Get input for proof
+        let proof_inputs = self
+            .tendermint_client
+            .fetch_proof_inputs(light_client_height, max_block);
 
         //         let encoded_proof_inputs = serde_cbor::to_vec(&inputs)?;
         //         stdin.write_vec(encoded_proof_inputs);
