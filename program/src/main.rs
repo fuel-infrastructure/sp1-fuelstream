@@ -20,14 +20,22 @@ fn compute_bridge_commitment(headers: &[Header]) -> [u8; 32] {
         let curr_header = &headers[i];
         let next_header = &headers[i + 1];
 
-        // Verify the chain of headers is connected.
-        if curr_header.hash() != next_header.last_block_id.unwrap().hash {
+        // Verify the chain of headers is connected. Skip if genesis block.
+        if curr_header.height.value() > 1
+            && curr_header.hash() != next_header.last_block_id.unwrap().hash
+        {
             panic!("invalid header");
         }
 
         let last_results_hash: [u8; 32] = curr_header
             .last_results_hash
-            .expect("header has no last results hash.")
+            .ok_or_else(|| {
+                panic!(
+                    "Header at height {} has no last_results_hash",
+                    curr_header.height
+                )
+            })
+            .unwrap()
             .as_bytes()
             .try_into()
             .unwrap();

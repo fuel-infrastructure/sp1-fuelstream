@@ -4,6 +4,7 @@ Forked from [sp1-blobstream using commit cbd1ee173a9acf8cda80bf4b6ed093623dd7e0a
 Circuit Building to Create Elf:
 
 ```
+cd ./program
 cargo prove build --docker --tag v3.0.0 --elf-name fuelstreamx-elf
 ```
 

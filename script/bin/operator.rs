@@ -86,7 +86,7 @@ impl FuelStreamXOperator {
     }
 
     async fn run(&mut self) -> Result<()> {
-        self.check_v_key().await?;
+        self.check_v_key().await.expect("check vKey failed");
 
         // Get latest light client sync from Ethereum
         // let bridge_commitment_max = self.ethereum_client.get_bridge_commitment_max().await;
@@ -134,7 +134,6 @@ impl FuelStreamXOperator {
             .tendermint_client
             .fetch_proof_inputs(light_client_height, max_block)
             .await;
-
         match self.plonk_client.generate_proof(proof_inputs).await {
             Ok(proof_output) => {
                 println!("{:?}", proof_output);
