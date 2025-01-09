@@ -40,9 +40,6 @@ impl FuelStreamXPlonkClient {
     pub async fn generate_proof(&self, inputs: ProofInputs) -> Result<SP1ProofWithPublicValues> {
         let mut stdin = SP1Stdin::new();
 
-        // Print headers for debugging
-        println!("Headers: {:?}", inputs.headers);
-
         // Encode
         let encoded_proof_inputs = serde_cbor::to_vec(&inputs)?;
         stdin.write_vec(encoded_proof_inputs);
