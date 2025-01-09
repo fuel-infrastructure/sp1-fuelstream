@@ -2,148 +2,16 @@
 //!
 //!     `cargo run --release --bin operator`
 use alloy::primitives::B256;
-use anyhow::{Ok, Result};
+use anyhow::Result;
 use core::str::FromStr;
 use fuelstreamx_sp1_script::ethereum_client::FuelStreamXEthereumClient;
 use fuelstreamx_sp1_script::plonk_client::FuelStreamXPlonkClient;
 use fuelstreamx_sp1_script::tendermint_client::FuelStreamXTendermintClient;
 use log::{error, info};
-use primitives::get_header_update_verdict;
-use primitives::types::ProofInputs;
 use std::env;
-use std::sync::Arc;
-use std::time::Duration;
-use tendermint::node::info;
+use std::result::Result::Ok;
 use tendermint_light_client::verifier::types::Height;
-use tendermint_light_client_verifier::Verdict;
 use tendermint_rpc::{Client, Url};
-
-// Timeout for the proof in seconds.
-const PROOF_TIMEOUT_SECONDS: u64 = 60 * 30;
-
-const NUM_RELAY_RETRIES: u32 = 3;
-
-// impl SP1BlobstreamOperator {
-
-//     async fn request_header_range(
-//         &self,
-//         trusted_block: u64,
-//         target_block: u64,
-//     ) -> Result<SP1ProofWithPublicValues> {
-//         let prover = TendermintProver::new();
-//         let mut stdin = SP1Stdin::new();
-
-//         let inputs = prover
-//             .fetch_input_for_blobstream_proof(trusted_block, target_block)
-//             .await;
-
-//         // Simulate the step from the trusted block to the target block.
-//         let verdict =
-//             get_header_update_verdict(&inputs.trusted_light_block, &inputs.target_light_block);
-//         assert_eq!(verdict, Verdict::Success);
-
-//         let encoded_proof_inputs = serde_cbor::to_vec(&inputs)?;
-//         stdin.write_vec(encoded_proof_inputs);
-
-//         self.client
-//             .prove(&self.pk, stdin)
-//             .plonk()
-//             .timeout(Duration::from_secs(PROOF_TIMEOUT_SECONDS))
-//             .run()
-//     }
-
-//     /// Relay a header range proof to the SP1 Blobstream contract.
-//     async fn relay_header_range(&self, proof: SP1ProofWithPublicValues) -> Result<B256> {
-//         // TODO: sp1_sdk should return empty bytes in mock mode.
-//         let proof_as_bytes = if env::var("SP1_PROVER").unwrap().to_lowercase() == "mock" {
-//             vec![]
-//         } else {
-//             proof.bytes()
-//         };
-
-//         let contract = SP1Blobstream::new(self.contract_address, self.wallet_filler.clone());
-
-//         if self.use_kms_relayer {
-//             let proof_bytes = proof_as_bytes.clone().into();
-//             let public_values = proof.public_values.to_vec().into();
-//             let commit_header_range = contract.commitHeaderRange(proof_bytes, public_values);
-//             relay::relay_with_kms(
-//                 &relay::KMSRelayRequest {
-//                     chain_id: self.chain_id,
-//                     address: self.contract_address.to_checksum(None),
-//                     calldata: commit_header_range.calldata().to_string(),
-//                     platform_request: false,
-//                 },
-//                 NUM_RELAY_RETRIES,
-//             )
-//             .await
-//         } else {
-//             let public_values_bytes = proof.public_values.to_vec();
-
-//             let gas_limit = relay::get_gas_limit(self.chain_id);
-//             let max_fee_per_gas =
-//                 relay::get_fee_cap(self.chain_id, self.wallet_filler.root()).await;
-
-//             let nonce = self
-//                 .wallet_filler
-//                 .get_transaction_count(self.relayer_address)
-//                 .await?;
-
-//             // Wait for 3 required confirmations with a timeout of 60 seconds.
-//             const NUM_CONFIRMATIONS: u64 = 3;
-//             const TIMEOUT_SECONDS: u64 = 60;
-//             let receipt = contract
-//                 .commitHeaderRange(proof_as_bytes.into(), public_values_bytes.into())
-//                 .gas_price(max_fee_per_gas)
-//                 .gas(gas_limit)
-//                 .nonce(nonce)
-//                 .send()
-//                 .await?
-//                 .with_required_confirmations(NUM_CONFIRMATIONS)
-//                 .with_timeout(Some(Duration::from_secs(TIMEOUT_SECONDS)))
-//                 .get_receipt()
-//                 .await?;
-
-//             // If status is false, it reverted.
-//             if !receipt.status() {
-//                 error!("Transaction reverted!");
-//             }
-
-//             Ok(receipt.transaction_hash)
-//         }
-//     }
-
-//     async fn run(&self) -> Result<()> {
-//         self.check_vkey().await?;
-
-//         // If block_to_request is greater than the current block in the contract, attempt to request.
-//         if block_to_request > current_block {
-//             // The next block the operator should request.
-//             let max_end_block = block_to_request;
-
-//             let target_block = fetcher
-//                 .find_block_to_request(current_block, max_end_block)
-//                 .await;
-
-//             info!("Current block: {}", current_block);
-//             info!("Attempting to step to block {}", target_block);
-
-//             // Request a header range if the target block is not the next block.
-//             match self.request_header_range(current_block, target_block).await {
-//                 Ok(proof) => {
-//                     let tx_hash = self.relay_header_range(proof).await?;
-//                     info!(
-//                         "Posted data commitment from block {} to block {}\nTransaction hash: {}",
-//                         current_block, target_block, tx_hash
-//                     );
-//                 }
-//                 Err(e) => {
-//                     return Err(anyhow::anyhow!("Header range request failed: {}", e));
-//                 }
-//             };
-//         Ok(())
-//     }
-// }
 
 struct FuelStreamXOperator {
     ethereum_client: FuelStreamXEthereumClient,
@@ -221,7 +89,8 @@ impl FuelStreamXOperator {
         self.check_v_key().await?;
 
         // Get latest light client sync from Ethereum
-        let bridge_commitment_max = self.ethereum_client.get_bridge_commitment_max().await;
+        // let bridge_commitment_max = self.ethereum_client.get_bridge_commitment_max().await;
+        let bridge_commitment_max = 5;
         let (light_client_height, light_client_hash) = self.ethereum_client.get_latest_sync().await;
 
         // Assertion to check if a correct tendermint node is in use
@@ -265,15 +134,20 @@ impl FuelStreamXOperator {
             .tendermint_client
             .fetch_proof_inputs(light_client_height, max_block)
             .await;
-        let proof_output = self
-            .plonk_client
-            .generate_proof(proof_inputs)
-            .await
-            .expect("failed to generate zk proof");
 
-        // Submit proof on-chain
+        match self.plonk_client.generate_proof(proof_inputs).await {
+            Ok(proof_output) => {
+                println!("{:?}", proof_output);
+                info!("successfully generated proof")
+            }
+            Err(e) => {
+                return Err(anyhow::anyhow!("failed to generate proof: {}", e));
+            }
+        };
 
-        self.Ok(())
+        // TODO: Submit proof on-chain
+
+        Ok(())
     }
 }
 
