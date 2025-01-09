@@ -141,7 +141,22 @@ impl FuelStreamXOperator {
             .await
             .expect("failed to generate proof");
 
+        // TODO: check that proof output matches with tendermint commitment
+
         // Submit on-chain
+        let public_values_bytes = proof_output.public_values.to_vec();
+        let tx_hash = self
+            .ethereum_client
+            .commit_header_range(proof_output.bytes().into(), public_values_bytes.into())
+            .await
+            .expect("failed to submit proof on-chain");
+
+        info!(
+            "posted bridge commitment with block range {} to {}. Transaction hash: {}",
+            proof_inputs.trusted_light_block.height().value(),
+            proof_inputs.target_light_block.height().value(),
+            tx_hash
+        );
 
         Ok(())
     }

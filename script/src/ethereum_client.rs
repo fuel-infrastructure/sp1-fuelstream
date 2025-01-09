@@ -1,6 +1,6 @@
 use alloy::{
     network::{Ethereum, EthereumWallet},
-    primitives::{Address, B256},
+    primitives::{Address, Bytes, FixedBytes, B256},
     providers::{
         fillers::{
             BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller,
@@ -12,6 +12,9 @@ use alloy::{
     sol,
     transports::http::{Client, Http},
 };
+use anyhow::Result;
+use std::result::Result::Ok;
+use std::time::Duration;
 use FuelStreamX::FuelStreamXInstance;
 
 // TODO: link
@@ -47,10 +50,13 @@ type EthereumFillProvider = FillProvider<
 
 pub struct FuelStreamXEthereumClient {
     /// Exposes Ethereum JSON-RPC methods with an Ethereum wallet already configured
-    provider: EthereumFillProvider,
+    pub provider: EthereumFillProvider,
     /// FuelStreamX contract instance, connected with the provider
     contract: FuelStreamXInstance<Http<Client>, EthereumFillProvider>,
 }
+
+const NUM_CONFIRMATIONS: u64 = 2;
+const TIMEOUT_SECONDS: u64 = 300;
 
 impl FuelStreamXEthereumClient {
     /// Constructs a new FuelStreamX contract client
@@ -114,5 +120,35 @@ impl FuelStreamXEthereumClient {
             .await
             .expect("failed to get vKey")
             .vKey
+    }
+
+    /// Submits a light client update on-chain
+    pub async fn commit_header_range(
+        &self,
+        proof: Bytes,
+        public_values: Bytes,
+    ) -> Result<FixedBytes<32>> {
+        let tx = self
+            .contract
+            .commitHeaderRange(proof, public_values)
+            .send()
+            .await
+            .map_err(|e| {
+                anyhow::anyhow!("failed to submit commit_header_range transaction: {}", e)
+            })?;
+
+        let receipt = tx
+            .with_required_confirmations(NUM_CONFIRMATIONS)
+            .with_timeout(Some(Duration::from_secs(TIMEOUT_SECONDS)))
+            .get_receipt()
+            .await
+            .map_err(|e| anyhow::anyhow!("failed to get transaction receipt, transaction was submitted but not confirmed: {}", e))?;
+
+        // If status is false, the transaction was reverted. Need to re-submit
+        if !receipt.status() {
+            return Err(anyhow::anyhow!("transaction was reverted",));
+        }
+
+        Ok(receipt.transaction_hash)
     }
 }
