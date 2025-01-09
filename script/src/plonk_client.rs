@@ -44,7 +44,7 @@ impl FuelStreamXPlonkClient {
         let encoded_proof_inputs = serde_cbor::to_vec(&inputs)?;
         stdin.write_vec(encoded_proof_inputs);
 
-        // Run, might take a while if on cpu
+        // Run, might take a while if on cpu and requires 128GB+ ram
         self.prover
             .prove(&self.pk, stdin)
             .plonk()

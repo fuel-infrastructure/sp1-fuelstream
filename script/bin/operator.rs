@@ -134,17 +134,14 @@ impl FuelStreamXOperator {
             .tendermint_client
             .fetch_proof_inputs(light_client_height, max_block)
             .await;
-        match self.plonk_client.generate_proof(proof_inputs).await {
-            Ok(proof_output) => {
-                println!("{:?}", proof_output);
-                info!("successfully generated proof")
-            }
-            Err(e) => {
-                return Err(anyhow::anyhow!("failed to generate proof: {}", e));
-            }
-        };
 
-        // TODO: Submit proof on-chain
+        let proof_output = self
+            .plonk_client
+            .generate_proof(proof_inputs)
+            .await
+            .expect("failed to generate proof");
+
+        // Submit on-chain
 
         Ok(())
     }
