@@ -217,7 +217,7 @@ impl FuelStreamXOperator {
         Ok(())
     }
 
-    async fn run(&self) -> Result<()> {
+    async fn run(&mut self) -> Result<()> {
         self.check_v_key().await?;
 
         // Get latest light client sync from Ethereum
@@ -260,21 +260,20 @@ impl FuelStreamXOperator {
             return Ok(());
         }
 
-        // Get input for proof
+        // Call the circuit
         let proof_inputs = self
             .tendermint_client
-            .fetch_proof_inputs(light_client_height, max_block);
+            .fetch_proof_inputs(light_client_height, max_block)
+            .await;
+        let proof_output = self
+            .plonk_client
+            .generate_proof(proof_inputs)
+            .await
+            .expect("failed to generate zk proof");
 
-        //         let encoded_proof_inputs = serde_cbor::to_vec(&inputs)?;
-        //         stdin.write_vec(encoded_proof_inputs);
+        // Submit proof on-chain
 
-        //         self.client
-        //             .prove(&self.pk, stdin)
-        //             .plonk()
-        //             .timeout(Duration::from_secs(PROOF_TIMEOUT_SECONDS))
-        //             .run()
-
-        Ok(())
+        self.Ok(())
     }
 }
 
@@ -284,9 +283,9 @@ async fn main() {
     env_logger::init();
 
     // Run operator with a timeout, the timeout should be long enough to generate a ZK proof
-    let operator = FuelStreamXOperator::new().await;
+    let mut operator = FuelStreamXOperator::new().await;
     if let Err(e) = tokio::time::timeout(
-        tokio::time::Duration::from_secs(60 * operator.plonk_client.timeout),
+        tokio::time::Duration::from_secs(operator.plonk_client.timeout),
         operator.run(),
     )
     .await
