@@ -141,9 +141,6 @@ const NUM_RELAY_RETRIES: u32 = 3;
 //                     return Err(anyhow::anyhow!("Header range request failed: {}", e));
 //                 }
 //             };
-//         } else {
-//             info!("Next block to request is {} which is > the head of the Tendermint chain which is {}. Sleeping.", block_to_request + block_update_interval, latest_stable_tendermint_block);
-//         }
 //         Ok(())
 //     }
 // }
@@ -227,7 +224,7 @@ impl FuelStreamXOperator {
         let bridge_commitment_max = self.ethereum_client.get_bridge_commitment_max().await;
         let (light_client_height, light_client_hash) = self.ethereum_client.get_latest_sync().await;
 
-        // Assertion check if we're using a correct tendermint node
+        // Assertion to check if a correct tendermint node is in use
         assert!(light_client_hash == B256::from_slice(
             self.tendermint_client
                 .rpc_client
@@ -262,6 +259,26 @@ impl FuelStreamXOperator {
             info!("not enough blocks have been generated for a new light client update, sleeping");
             return Ok(());
         }
+
+        // Get inputs
+
+        //         let inputs = prover
+        //             .fetch_input_for_blobstream_proof(trusted_block, target_block)
+        //             .await;
+
+        //         // Simulate the step from the trusted block to the target block.
+        //         let verdict =
+        //             get_header_update_verdict(&inputs.trusted_light_block, &inputs.target_light_block);
+        //         assert_eq!(verdict, Verdict::Success);
+
+        //         let encoded_proof_inputs = serde_cbor::to_vec(&inputs)?;
+        //         stdin.write_vec(encoded_proof_inputs);
+
+        //         self.client
+        //             .prove(&self.pk, stdin)
+        //             .plonk()
+        //             .timeout(Duration::from_secs(PROOF_TIMEOUT_SECONDS))
+        //             .run()
 
         Ok(())
     }

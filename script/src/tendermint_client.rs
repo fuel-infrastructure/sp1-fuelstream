@@ -1,4 +1,6 @@
 use log::debug;
+use primitives::get_header_update_verdict;
+use primitives::types::ProofInputs;
 use std::time::Duration;
 use tendermint::block::Header;
 use tendermint_light_client::{
@@ -7,8 +9,6 @@ use tendermint_light_client::{
     verifier::{types::Height, Verdict},
 };
 use tendermint_rpc::{Client, HttpClient, Url};
-
-use primitives::get_header_update_verdict;
 
 /// Number of concurrent API requests to a Tendermint node
 const BATCH_SIZE: usize = 25;
@@ -39,6 +39,32 @@ impl FuelStreamXTendermintClient {
         Self {
             rpc_client,
             io: Box::new(io),
+        }
+    }
+
+    /// Fetches the inputs for the next circuit proof to update the light client on Ethereum.
+    pub async fn fetch_proof_inputs(
+        &mut self,
+        start_height: u64,
+        max_end_height: u64,
+    ) -> ProofInputs {
+        // Check if there was a major voting power change within the given block range
+        let (start_light_block, end_light_block) = self
+            .get_next_light_client_update(start_height, max_end_height)
+            .await;
+
+        // Obtain all the block headers to construct a bridge commitment hash
+        let headers = self
+            .fetch_blocks_in_range(
+                start_light_block.height().value(),
+                end_light_block.height().value(),
+            )
+            .await;
+
+        ProofInputs {
+            trusted_light_block: start_light_block,
+            target_light_block: end_light_block,
+            headers,
         }
     }
 
