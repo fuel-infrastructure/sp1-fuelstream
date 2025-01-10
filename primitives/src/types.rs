@@ -18,7 +18,7 @@ pub type ProofOutputs = sol! {
     tuple(uint64, bytes32, uint64, bytes32, bytes32)
 };
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProofInputs {
     /// The trusted light block containing validator sets required for light client verification.
     /// This block serves as the starting point for the light client's verification process.

@@ -1,3 +1,6 @@
+use fuel_sequencer_proto::protos::fuelsequencer::commitments::v1::{
+    query_client::QueryClient as CommitmentQueryClient, QueryBridgeCommitmentRequest,
+};
 use log::debug;
 use primitives::get_header_update_verdict;
 use primitives::types::ProofInputs;
@@ -9,6 +12,7 @@ use tendermint_light_client::{
     verifier::{types::Height, Verdict},
 };
 use tendermint_rpc::{Client, HttpClient, Url};
+use tonic::transport::Channel;
 
 /// Number of concurrent API requests to a Tendermint node
 const BATCH_SIZE: usize = 25;
@@ -18,13 +22,15 @@ pub struct FuelStreamXTendermintClient {
     pub rpc_client: HttpClient,
     /// Interface for fetching light blocks from a full node
     io: Box<dyn Io>,
+    /// The inner `tonic` gRPC channel shared by the various generated gRPC clients.
+    grpc_channel: Channel,
 }
 
 impl FuelStreamXTendermintClient {
     /// Constructs a new FuelStreamX light client
-    pub async fn new(tendermint_rpc: Url) -> Self {
-        let rpc_client =
-            HttpClient::new(tendermint_rpc).expect("failed to connect to a tendermint node");
+    pub async fn new(tendermint_rpc: Url, tendermint_grpc: String) -> Self {
+        let rpc_client = HttpClient::new(tendermint_rpc.clone())
+            .expect("failed to connect to a tendermint node");
 
         let peer_id = rpc_client
             .status()
@@ -36,9 +42,17 @@ impl FuelStreamXTendermintClient {
         let timeout = Some(Duration::from_secs(10));
         let io = ProdIo::new(peer_id, rpc_client.clone(), timeout);
 
+        // Grpc
+        let channel = Channel::from_shared(tendermint_grpc)
+            .expect("failed to parse tendermint grpc endpoint")
+            .connect()
+            .await
+            .expect("failed to connect with tendermint grpc");
+
         Self {
             rpc_client,
             io: Box::new(io),
+            grpc_channel: channel,
         }
     }
 
@@ -161,6 +175,19 @@ impl FuelStreamXTendermintClient {
         self.io
             .fetch_light_block(AtHeight::At(Height::try_from(block_height).unwrap()))
             .expect(&error_msg)
+    }
+
+    /// Fetches the bridge commitment between a block range
+    pub async fn fetch_bridge_commitment(self, start: u64, end: u64) -> Vec<u8> {
+        let mut commitment_query_client = CommitmentQueryClient::new(self.grpc_channel.clone());
+
+        commitment_query_client
+            .bridge_commitment(QueryBridgeCommitmentRequest { start, end })
+            .await
+            .expect("failed to get bridge commitment")
+            .into_inner()
+            .bridge_commitment
+            .to_vec()
     }
 }
 

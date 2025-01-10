@@ -137,7 +137,7 @@ impl FuelStreamXOperator {
 
         let proof_output = self
             .plonk_client
-            .generate_proof(proof_inputs)
+            .generate_proof(proof_inputs.clone())
             .await
             .expect("failed to generate proof");
 

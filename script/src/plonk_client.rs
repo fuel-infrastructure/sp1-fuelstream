@@ -1,10 +1,9 @@
-use std::time::Duration;
-
 use anyhow::Result;
 use primitives::types::{ProofInputs, FUELSTREAMX_ELF};
 use sp1_sdk::{
     HashableKey, ProverClient, SP1ProofWithPublicValues, SP1ProvingKey, SP1Stdin, SP1VerifyingKey,
 };
+use std::time::Duration;
 
 pub struct FuelStreamXPlonkClient {
     prover: ProverClient,
