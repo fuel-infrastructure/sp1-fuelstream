@@ -202,11 +202,18 @@ impl FuelStreamXTendermintClient {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::Value;
-
     use core::panic;
+    use fuel_sequencer_proto::bytes::Bytes;
+    use fuel_sequencer_proto::protos::fuelsequencer::commitments::v1::{
+        query_server::{Query, QueryServer},
+        QueryBridgeCommitmentInclusionProofRequest, QueryBridgeCommitmentInclusionProofResponse,
+        QueryBridgeCommitmentResponse,
+    };
+    use serde_json::Value;
     use std::fs;
-
+    use std::str::FromStr;
+    use tokio_stream::wrappers::TcpListenerStream;
+    use tonic::{transport::Server, Request, Response, Status};
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -238,14 +245,13 @@ mod tests {
         serde_json::from_str(&content).unwrap()
     }
 
-    // Helper function to set up FuelStreamXLightClient pointed to a mocked Tendermint node
+    // Helper function to set up FuelStreamXTendermintClient pointed to a mocked Tendermint node
     async fn setup_client_with_mocked_server(
         test_name: &'static str,
-    ) -> (MockServer, FuelStreamXLightClient) {
+    ) -> (MockServer, FuelStreamXTendermintClient) {
         let server = MockServer::start().await;
 
         // -------- Mock requests
-
         Mock::given(method("POST"))
             .and(path("/"))
             .respond_with(move |req: &wiremock::Request| {
@@ -276,10 +282,52 @@ mod tests {
             .mount(&server)
             .await;
 
+        // -------- Mock gRPC server
+        struct MockQueryService {
+            test_name: &'static str,
+        }
+
+        #[tonic::async_trait]
+        impl Query for MockQueryService {
+            async fn bridge_commitment(
+                &self,
+                request: Request<QueryBridgeCommitmentRequest>,
+            ) -> Result<Response<QueryBridgeCommitmentResponse>, Status> {
+                // Create hardcoded response or construct from request
+                let response = QueryBridgeCommitmentResponse {
+                    bridge_commitment: Bytes::from(vec![1, 2, 3, 4]), // Example data
+                };
+                Ok(Response::new(response))
+            }
+            // All other methods return unimplemented
+            async fn bridge_commitment_inclusion_proof(
+                &self,
+                _request: Request<QueryBridgeCommitmentInclusionProofRequest>,
+            ) -> Result<Response<QueryBridgeCommitmentInclusionProofResponse>, Status> {
+                Err(Status::unimplemented("method not implemented"))
+            }
+        }
+
+        // Start gRPC server on a random port
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let local_addr = listener.local_addr().unwrap();
+
+        let service = MockQueryService { test_name };
+
+        tokio::spawn(async move {
+            Server::builder()
+                .add_service(QueryServer::new(service))
+                .serve_with_incoming(TcpListenerStream::new(listener))
+                .await
+                .expect("gRPC sequencer server failed")
+        });
+
         // -------- FuelstreamX setup
-        let client =
-            FuelStreamXLightClient::new(format!("http://{}", server.address()).parse().unwrap())
-                .await;
+        let client = FuelStreamXTendermintClient::new(
+            format!("http://{}", server.address()).parse().unwrap(),
+            format!("http://{}", local_addr),
+        )
+        .await;
 
         (server, client)
     }
