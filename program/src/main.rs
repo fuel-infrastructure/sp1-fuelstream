@@ -59,6 +59,7 @@ pub fn main() {
         trusted_light_block,
         target_light_block,
         headers,
+        bridge_commitment,
     } = proof_inputs;
 
     let verdict = get_header_update_verdict(&trusted_light_block, &target_light_block);
@@ -79,11 +80,11 @@ pub fn main() {
     }
 
     // Compute the bridge commitment across the range.
-    let mut all_headers = Vec::new();
-    all_headers.push(trusted_light_block.signed_header.header.clone());
-    all_headers.extend(headers);
-    all_headers.push(target_light_block.signed_header.header.clone());
-    let bridge_commitment = B256::from_slice(&compute_bridge_commitment(&all_headers));
+    let generated_bridge_commitment = B256::from_slice(&compute_bridge_commitment(&headers));
+    assert!(
+        bridge_commitment.as_slice() == generated_bridge_commitment.as_slice(),
+        "generated bridge commitment does not match"
+    );
 
     // ABI encode the proof outputs to bytes and commit them to the zkVM.
     let trusted_header_hash =
@@ -95,7 +96,7 @@ pub fn main() {
         trusted_header_hash,
         target_light_block.signed_header.header.height.value(),
         target_header_hash,
-        bridge_commitment,
+        generated_bridge_commitment,
     ));
     sp1_zkvm::io::commit_slice(&proof_outputs);
 }
