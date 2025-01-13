@@ -209,9 +209,9 @@ mod tests {
         QueryBridgeCommitmentInclusionProofRequest, QueryBridgeCommitmentInclusionProofResponse,
         QueryBridgeCommitmentResponse,
     };
+    use serde::Deserialize;
     use serde_json::Value;
     use std::fs;
-    use std::str::FromStr;
     use tokio_stream::wrappers::TcpListenerStream;
     use tonic::{transport::Server, Request, Response, Status};
     use wiremock::matchers::{method, path};
@@ -287,15 +287,38 @@ mod tests {
             test_name: &'static str,
         }
 
+        #[derive(Deserialize)]
+        struct BridgeCommitmentJson {
+            bridge_commitment: String,
+        }
+
         #[tonic::async_trait]
         impl Query for MockQueryService {
             async fn bridge_commitment(
                 &self,
                 request: Request<QueryBridgeCommitmentRequest>,
             ) -> Result<Response<QueryBridgeCommitmentResponse>, Status> {
-                // Create hardcoded response or construct from request
+                // Request message
+                let inner_request: QueryBridgeCommitmentRequest = request.into_inner();
+
+                // Load from json
+                let json_value = load_mock_response(
+                    self.test_name,
+                    &format!(
+                        "bridge_commitment?start={}&end={}.json",
+                        inner_request.start, inner_request.end
+                    ),
+                );
+                // Parse
+                let parsed: BridgeCommitmentJson =
+                    serde_json::from_value(json_value).expect("failed to deserialized json");
+
+                // Create response
                 let response = QueryBridgeCommitmentResponse {
-                    bridge_commitment: Bytes::from(vec![1, 2, 3, 4]), // Example data
+                    bridge_commitment: Bytes::from(
+                        hex::decode(parsed.bridge_commitment)
+                            .expect("failed to decode bridge commitment"),
+                    ),
                 };
                 Ok(Response::new(response))
             }
@@ -311,7 +334,6 @@ mod tests {
         // Start gRPC server on a random port
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let local_addr = listener.local_addr().unwrap();
-
         let service = MockQueryService { test_name };
 
         tokio::spawn(async move {
@@ -433,7 +455,6 @@ mod tests {
     }
 
     #[test]
-
     fn fetch_blocks_in_range_succeeds() {
         run_async_test!(async {
             let (_, client) =
@@ -458,6 +479,22 @@ mod tests {
                     "AD8A7992BAE27F7AFF45FA131212003B1965101FD7273BF86010E1EEC86C7407",
                     "776BAC2BEA051A2B6F1CCDA4F0832DC44C8D1A9103B2AEFA6DFE054101FC4CDD"
                 ]
+            );
+        });
+    }
+
+    #[test]
+    fn fetch_bridge_commitment_succeeds() {
+        run_async_test!(async {
+            let (_, mut client) =
+                setup_client_with_mocked_server(OVER_85_PERCENT_VOTING_POWER_CHANGE).await;
+
+            // Get commitment within a range
+            let bridge_commitment = client.fetch_bridge_commitment(215198, 215207).await;
+
+            assert_eq!(
+                hex::encode(bridge_commitment).to_uppercase(),
+                "3E65AF4686FAE0D1E20903DA42F94A06E74034D5220FA14A5C33A24B928558A8",
             );
         });
     }
