@@ -75,10 +75,18 @@ impl FuelStreamXTendermintClient {
             )
             .await;
 
+        let bridge_commitment = self
+            .fetch_bridge_commitment(
+                start_light_block.height().value(),
+                end_light_block.height().value(),
+            )
+            .await;
+
         ProofInputs {
             trusted_light_block: start_light_block,
             target_light_block: end_light_block,
             headers,
+            bridge_commitment,
         }
     }
 
@@ -178,7 +186,7 @@ impl FuelStreamXTendermintClient {
     }
 
     /// Fetches the bridge commitment between a block range
-    pub async fn fetch_bridge_commitment(self, start: u64, end: u64) -> Vec<u8> {
+    pub async fn fetch_bridge_commitment(&mut self, start: u64, end: u64) -> Vec<u8> {
         let mut commitment_query_client = CommitmentQueryClient::new(self.grpc_channel.clone());
 
         commitment_query_client

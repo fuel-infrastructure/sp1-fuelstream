@@ -141,8 +141,6 @@ impl FuelStreamXOperator {
             .await
             .expect("failed to generate proof");
 
-        // TODO: check that proof output matches with tendermint commitment
-
         // Submit on-chain
         let public_values_bytes = proof_output.public_values.to_vec();
         let tx_hash = self

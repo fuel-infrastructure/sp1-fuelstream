@@ -32,4 +32,9 @@ pub struct ProofInputs {
     /// This vector contains all headers between (but not including) the trusted
     /// and target light blocks' headers.
     pub headers: Vec<Header>,
+
+    /// The bridge commitment for the range of the block.
+    /// In the circuit we re-construct the bridge commitment. We pass the commitment here
+    /// to re-assure everything is correct code-wise.
+    pub bridge_commitment: Vec<u8>,
 }
