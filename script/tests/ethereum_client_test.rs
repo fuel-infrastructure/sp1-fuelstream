@@ -1,13 +1,11 @@
 mod common;
 
-use common::mock_ethereum_rpc_server::spawn_ethereum_rpc_server;
-use common::OVER_66_PERCENT_VOTING_POWER_CHANGE;
-
-use fuelstreamx_sp1_script::ethereum_client::FuelStreamXEthereumClient;
-
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::common::mock_ethereum_rpc_server::tests::spawn_ethereum_rpc_server;
+    use crate::common::OVER_66_PERCENT_VOTING_POWER_CHANGE;
+
+    use fuelstreamx_sp1_script::ethereum_client::FuelStreamXEthereumClient;
 
     macro_rules! run_async_test {
         ($fixture:expr, $test:expr) => {{

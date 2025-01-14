@@ -14,6 +14,7 @@ The following are the abi encoded function selectors that are used in the tests 
 | commitmentTimestamp             | 0xfb6162b0           |
 | processSequencerSupplyUpdate    | 0x2290bf58           |
 | Aggregate3 (multicall contract) | 0x82ad56cb           |
+| vKey                            | 0x625baeab           |
 
 `eth_call`:
 
