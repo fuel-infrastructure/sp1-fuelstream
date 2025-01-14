@@ -6,7 +6,7 @@ use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
 /// Spawn another thread for the rpc server
-pub async fn spawn_rpc_server(fixture_name: String) -> String {
+pub async fn spawn_tendermint_rpc_server(fixture_name: String) -> String {
     let server = MockServer::start().await;
 
     // Http server simply returns the loaded json

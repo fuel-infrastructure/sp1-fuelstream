@@ -62,7 +62,7 @@ impl Query for MockCommitmentsService {
 }
 
 /// Spawn another thread for the grpc server
-pub async fn spawn_grpc_server(fixture_name: String) -> String {
+pub async fn spawn_tendermint_grpc_server(fixture_name: String) -> String {
     // Start gRPC server on a random port
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let local_addr = listener.local_addr().unwrap();
