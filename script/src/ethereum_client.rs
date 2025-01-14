@@ -17,7 +17,6 @@ use std::result::Result::Ok;
 use std::time::Duration;
 use FuelStreamX::FuelStreamXInstance;
 
-// TODO: link
 sol! {
     #[sol(rpc)]
     contract FuelStreamX {
