@@ -29,23 +29,28 @@ mod tests {
 
     #[test]
     fn fetch_contract_data_success() {
-        run_async_test!(
-            OVER_66_PERCENT_VOTING_POWER_CHANGE,
-            |mut client| async move {
-                // Commitment
-                let bridge_commitment_max = client.get_bridge_commitment_max().await;
+        run_async_test!(OVER_66_PERCENT_VOTING_POWER_CHANGE, |client| async move {
+            // Commitment
+            let bridge_commitment_max = client.get_bridge_commitment_max().await;
 
-                assert_eq!(4096, bridge_commitment_max);
+            assert_eq!(4096, bridge_commitment_max);
 
-                // Genesis values
-                let (latest_height, latest_block_header) = client.get_latest_sync().await;
+            // Genesis values
+            let (latest_height, latest_block_header) = client.get_latest_sync().await;
 
-                assert_eq!(1, latest_height);
-                assert_eq!(
-                    "0xd024b653e1eaecfb8ed7b87ee5123892b5f14a00dade2f6c41ece68e9e9d2b82",
-                    latest_block_header.to_string()
-                );
-            }
-        );
+            assert_eq!(1, latest_height);
+            assert_eq!(
+                "0xd024b653e1eaecfb8ed7b87ee5123892b5f14a00dade2f6c41ece68e9e9d2b82",
+                latest_block_header.to_string()
+            );
+
+            // vKey
+            let v_key = client.get_v_key().await;
+
+            assert_eq!(
+                "0x005ea3520b9277a62c636dabcf2e7930aed0b99766d8d741f179261aecdd9e71",
+                v_key.to_string()
+            );
+        });
     }
 }
