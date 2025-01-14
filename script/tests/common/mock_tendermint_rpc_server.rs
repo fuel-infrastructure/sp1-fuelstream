@@ -2,10 +2,6 @@ use super::load_mock_response;
 
 use core::panic;
 
-use serde::Deserialize;
-use serde_json::Value;
-use std::fs;
-
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -44,5 +40,5 @@ pub async fn spawn_rpc_server(fixture_name: String) -> String {
         .mount(&server)
         .await;
 
-    format!("http://{}", server.address()).parse().unwrap()
+    format!("http://{}", server.address())
 }
