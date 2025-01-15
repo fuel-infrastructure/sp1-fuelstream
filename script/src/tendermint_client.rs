@@ -215,7 +215,7 @@ impl FuelStreamXTendermintClient {
             .expect(&error_msg)
     }
 
-    /// Fetches the bridge commitment between a block range
+    /// Fetches the bridge commitment between a block range. Uses the grpc.
     pub async fn fetch_bridge_commitment(&mut self, start: u64, end: u64) -> Vec<u8> {
         let req = Request::new(QueryBridgeCommitmentRequest { start, end });
 
