@@ -51,9 +51,15 @@ impl FuelStreamXOperator {
             .expect("failed to parse TENDERMINT_RPC_URL string");
         let tendermint_grpc_url_env =
             env::var("TENDERMINT_GRPC_URL").expect("TENDERMINT_GRPC_URL not set");
+        let tendermint_grpc_basic_auth =
+            env::var("TENDERMINT_GRPC_BASIC_AUTH").expect("TENDERMINT_GRPC_BASIC_AUTH not set");
 
-        let tendermint_client =
-            FuelStreamXTendermintClient::new(tendermint_rpc_url, tendermint_grpc_url_env).await;
+        let tendermint_client = FuelStreamXTendermintClient::new(
+            tendermint_rpc_url,
+            tendermint_grpc_url_env,
+            tendermint_grpc_basic_auth,
+        )
+        .await;
 
         // -------- SP1 Config
 

@@ -12,7 +12,12 @@ use tendermint_light_client::{
     verifier::{types::Height, Verdict},
 };
 use tendermint_rpc::{Client, HttpClient, Url};
-use tonic::transport::Channel;
+
+use tonic::metadata::MetadataValue;
+use tonic::service::interceptor::{InterceptedService, Interceptor};
+use tonic::transport::{Channel, ClientTlsConfig};
+use tonic::Request;
+use tonic::Status;
 
 /// Number of concurrent API requests to a Tendermint node
 const BATCH_SIZE: usize = 25;
@@ -22,13 +27,30 @@ pub struct FuelStreamXTendermintClient {
     pub rpc_client: HttpClient,
     /// Interface for fetching light blocks from a full node
     io: Box<dyn Io>,
-    /// The inner `tonic` gRPC channel shared by the various generated gRPC clients.
-    grpc_channel: Channel,
+    /// The commitment client using the inner `tonic` gRPC channel.
+    commitment_client: CommitmentQueryClient<InterceptedService<Channel, AuthInterceptor>>,
+}
+
+// Grpc Auth
+struct AuthInterceptor {
+    auth_token: MetadataValue<tonic::metadata::Ascii>,
+}
+
+impl Interceptor for AuthInterceptor {
+    fn call(&mut self, mut req: Request<()>) -> Result<Request<()>, Status> {
+        req.metadata_mut()
+            .insert("authorization", self.auth_token.clone());
+        Ok(req)
+    }
 }
 
 impl FuelStreamXTendermintClient {
     /// Constructs a new FuelStreamX light client
-    pub async fn new(tendermint_rpc: Url, tendermint_grpc: String) -> Self {
+    pub async fn new(
+        tendermint_rpc: Url,
+        tendermint_grpc: String,
+        auth_basic_grpc: String,
+    ) -> Self {
         let rpc_client = HttpClient::new(tendermint_rpc.clone())
             .expect("failed to connect to a tendermint node");
 
@@ -45,14 +67,22 @@ impl FuelStreamXTendermintClient {
         // Grpc
         let channel = Channel::from_shared(tendermint_grpc)
             .expect("failed to parse tendermint grpc endpoint")
+            .tls_config(ClientTlsConfig::new())
+            .expect("failed to create tls config")
             .connect()
             .await
             .expect("failed to connect with tendermint grpc");
 
+        // Add authorization interceptor
+        let auth_token: MetadataValue<_> = format!("Basic {}", auth_basic_grpc).parse().unwrap();
+        let interceptor = AuthInterceptor { auth_token };
+
+        let commitment_client = CommitmentQueryClient::with_interceptor(channel, interceptor);
+
         Self {
             rpc_client,
             io: Box::new(io),
-            grpc_channel: channel,
+            commitment_client,
         }
     }
 
@@ -187,14 +217,14 @@ impl FuelStreamXTendermintClient {
 
     /// Fetches the bridge commitment between a block range
     pub async fn fetch_bridge_commitment(&mut self, start: u64, end: u64) -> Vec<u8> {
-        let mut commitment_query_client = CommitmentQueryClient::new(self.grpc_channel.clone());
+        let req = Request::new(QueryBridgeCommitmentRequest { start, end });
 
-        commitment_query_client
-            .bridge_commitment(QueryBridgeCommitmentRequest { start, end })
+        let resp = self
+            .commitment_client
+            .bridge_commitment(req)
             .await
-            .expect("failed to get bridge commitment")
-            .into_inner()
-            .bridge_commitment
-            .to_vec()
+            .expect("failed to get a bridge commitment response");
+
+        resp.into_inner().bridge_commitment.to_vec()
     }
 }
