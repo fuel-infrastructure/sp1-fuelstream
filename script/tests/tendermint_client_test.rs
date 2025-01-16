@@ -16,8 +16,12 @@ mod tests {
             runtime.block_on(async {
                 let grpc_url = spawn_tendermint_grpc_server($fixture.to_string()).await;
                 let rpc_url = spawn_tendermint_rpc_server($fixture.to_string()).await;
-                let client =
-                    FuelStreamXTendermintClient::new(rpc_url.parse().unwrap(), grpc_url).await;
+                let client = FuelStreamXTendermintClient::new(
+                    rpc_url.parse().unwrap(),
+                    grpc_url,
+                    String::from("anything"),
+                )
+                .await;
 
                 let test_fn: Box<dyn FnOnce(FuelStreamXTendermintClient) -> _> = Box::new($test);
                 test_fn(client).await
