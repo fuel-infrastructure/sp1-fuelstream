@@ -95,7 +95,7 @@ contract FuelStreamX is IFuelStreamX {
 
         emit HeadUpdate(po.targetBlock, po.targetHeaderHash);
         emit BridgeCommitmentStored(
-            state_proofNonce, latestBlock, po.targetBlock, po.bridgeCommitment
+            state_proofNonce, po.trustedBlock, po.targetBlock, po.bridgeCommitment
         );
     }
 }
