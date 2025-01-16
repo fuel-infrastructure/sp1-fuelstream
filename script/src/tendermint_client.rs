@@ -179,9 +179,7 @@ impl FuelStreamXTendermintClient {
             let mut batch_futures = Vec::with_capacity(BATCH_SIZE);
 
             // Get block commits concurrently, end exclusive
-            for height in
-                batch_start..std::cmp::min(batch_start + (BATCH_SIZE as u64) - 1, end_block)
-            {
+            for height in batch_start..std::cmp::min(batch_start + BATCH_SIZE as u64, end_block) {
                 batch_futures.push(async move {
                     self.rpc_client
                         .commit(Height::try_from(height).unwrap())
