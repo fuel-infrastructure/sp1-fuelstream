@@ -98,8 +98,7 @@ impl FuelStreamXOperator {
         self.check_v_key().await.expect("check vKey failed");
 
         // Get latest light client sync from Ethereum
-        // let bridge_commitment_max = self.ethereum_client.get_bridge_commitment_max().await;
-        let bridge_commitment_max = 5;
+        let bridge_commitment_max = self.ethereum_client.get_bridge_commitment_max().await;
         let (light_client_height, light_client_hash) = self.ethereum_client.get_latest_sync().await;
 
         // Assertion to check if a correct tendermint node is in use
