@@ -80,7 +80,12 @@ pub fn main() {
     }
 
     // Compute the bridge commitment across the range.
-    let generated_bridge_commitment = B256::from_slice(&compute_bridge_commitment(&headers));
+    let mut all_headers = Vec::new();
+    all_headers.push(trusted_light_block.signed_header.header.clone());
+    all_headers.extend(headers);
+    all_headers.push(target_light_block.signed_header.header.clone());
+
+    let generated_bridge_commitment = B256::from_slice(&compute_bridge_commitment(&all_headers));
     assert!(
         bridge_commitment.as_slice() == generated_bridge_commitment.as_slice(),
         "generated bridge commitment does not match"

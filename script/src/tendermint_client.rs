@@ -97,10 +97,11 @@ impl FuelStreamXTendermintClient {
             .get_next_light_client_update(start_height, max_end_height)
             .await;
 
-        // Obtain all the block headers to construct a bridge commitment hash
+        // Obtain all the block headers to construct a bridge commitment hash. Only obtain the headers
+        // between the start and end blocks.
         let headers = self
             .fetch_blocks_in_range(
-                start_light_block.height().value(),
+                start_light_block.height().value() + 1,
                 end_light_block.height().value(),
             )
             .await;
