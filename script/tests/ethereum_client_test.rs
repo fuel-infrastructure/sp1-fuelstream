@@ -11,9 +11,11 @@ mod tests {
         ($fixture:expr, $test:expr) => {{
             let runtime = tokio::runtime::Runtime::new().unwrap();
             runtime.block_on(async {
-                let rpc_url = spawn_ethereum_rpc_server($fixture.to_string()).await;
+                let eth_rpc_server =
+                    spawn_ethereum_rpc_server(OVER_66_PERCENT_VOTING_POWER_CHANGE.to_string())
+                        .await;
                 let client = FuelStreamXEthereumClient::new(
-                    &rpc_url,
+                    &format!("http://{}", eth_rpc_server.address()),
                     "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
                     "0x5FbDB2315678afecb367f032d93F642f64180aa3",
                 )
