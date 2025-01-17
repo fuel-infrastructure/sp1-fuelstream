@@ -65,7 +65,12 @@ pub mod tests {
                             &format!("eth_getTransactionReceipt?txHash={}.json", tx_hash),
                         ))
                     }
-                    "net_version" | "eth_chainId" | "eth_gasPrice" | "eth_blockNumber"
+                    "net_version"
+                    | "eth_chainId"
+                    | "eth_gasPrice"
+                    | "eth_blockNumber"
+                    | "eth_getBlockByNumber"
+                    | "eth_feeHistory"
                     | "eth_estimateGas" => ResponseTemplate::new(200).set_body_json(
                         load_mock_response(&fixture_name, &format!("{}.json", method)),
                     ),
