@@ -9,7 +9,7 @@ pub mod tests {
 
     /// Spawn another thread for the rpc server
     #[cfg(test)]
-    pub async fn spawn_ethereum_rpc_server(fixture_name: String) -> String {
+    pub async fn spawn_ethereum_rpc_server(fixture_name: String) -> MockServer {
         let server = MockServer::start().await;
 
         // Http server simply returns the loaded json
@@ -75,6 +75,6 @@ pub mod tests {
             .mount(&server)
             .await;
 
-        format!("http://{}", server.address())
+        server
     }
 }

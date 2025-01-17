@@ -15,9 +15,9 @@ mod tests {
             let runtime = tokio::runtime::Runtime::new().unwrap();
             runtime.block_on(async {
                 let grpc_url = spawn_tendermint_grpc_server($fixture.to_string()).await;
-                let rpc_url = spawn_tendermint_rpc_server($fixture.to_string()).await;
+                let rpc_server = spawn_tendermint_rpc_server($fixture.to_string()).await;
                 let client = FuelStreamXTendermintClient::new(
-                    rpc_url.parse().unwrap(),
+                    format!("http://{}", rpc_server.address()).parse().unwrap(),
                     grpc_url,
                     String::from("anything"),
                 )

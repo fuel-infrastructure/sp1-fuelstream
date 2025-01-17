@@ -13,7 +13,9 @@ use std::result::Result::Ok;
 use tendermint_light_client::verifier::types::Height;
 use tendermint_rpc::{Client, Url};
 
-struct FuelStreamXOperator {
+use sp1_sdk::SP1ProofWithPublicValues;
+
+pub struct FuelStreamXOperator {
     ethereum_client: FuelStreamXEthereumClient,
     tendermint_client: FuelStreamXTendermintClient,
     plonk_client: FuelStreamXPlonkClient,
@@ -94,7 +96,7 @@ impl FuelStreamXOperator {
         Ok(())
     }
 
-    async fn run(&mut self) -> Result<()> {
+    pub async fn run(&mut self) -> Result<Option<(SP1ProofWithPublicValues, B256)>> {
         self.check_v_key().await.expect("check vKey failed");
 
         // Get latest light client sync from Ethereum
@@ -134,7 +136,7 @@ impl FuelStreamXOperator {
             || (max_block - light_client_height) < self.minimum_block_range
         {
             info!("not enough blocks have been generated for a new light client update, sleeping");
-            return Ok(());
+            return Ok(None);
         }
 
         // Call the circuit
@@ -164,7 +166,7 @@ impl FuelStreamXOperator {
             tx_hash
         );
 
-        Ok(())
+        Ok(Some((proof_output, tx_hash)))
     }
 }
 

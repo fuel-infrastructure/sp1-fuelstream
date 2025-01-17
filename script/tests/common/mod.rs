@@ -14,6 +14,11 @@ pub const OVER_66_PERCENT_VOTING_POWER_CHANGE: &str = "over_66%_voting_power_cha
 #[cfg(test)]
 pub const OVER_85_PERCENT_VOTING_POWER_CHANGE: &str = "over_85%_voting_power_change";
 
+// Fixture contains:
+// All blocks from 1 - 30, with bridge commitment max being 30.
+#[cfg(test)]
+pub const FULL_RUN: &str = "full_run";
+
 #[cfg(test)]
 mod tests {
     use serde_json::Value;

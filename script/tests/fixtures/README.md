@@ -23,7 +23,7 @@ curl -X POST -H "Content-Type: application/json" \
 --data '{
   "jsonrpc": "2.0",
   "method": "eth_call",
-  "params": [{"to": "0xc794851C58e7e5Bc6bd3A2b2785E0758BBEDea9F", "data": "0x2290bf58000000000000000000000000000000000000000000000000000000000000000b000000000000000000000000000000000000000000000000000000000000a8c10c"}, "latest"],
+  "params": [{"to": "0x4e6111c3700cf93e2a3ac513020e49463a5327b5", "data": "0x382f7579"}, "latest"],
   "id": 1
 }' \
 https://rpc.ankr.com/eth_sepolia
