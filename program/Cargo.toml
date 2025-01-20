@@ -1,15 +1,15 @@
 [package]
 version = "0.1.0"
-name = "blobstream-program"
+name = "fuelstreamx-sp1-program"
 edition = "2021"
 
 [dependencies]
 primitives = { path = "../primitives" }
 sp1-zkvm = "3.0.0"
-tendermint-light-client-verifier = { version = "0.35.0", default-features = false, features = [
+tendermint-light-client-verifier = { version = "0.40.0", default-features = false, features = [
     "rust-crypto",
 ] }
-tendermint = "0.35.0"
+tendermint = "0.40.0"
 sha2 = "0.10"
 serde_cbor = "0.11.2"
 alloy = { version = "0.7.0", default-features = false, features = [

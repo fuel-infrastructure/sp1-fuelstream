@@ -1,317 +1,173 @@
-use alloy::{
-    network::{Ethereum, EthereumWallet},
-    primitives::{Address, B256},
-    providers::{
-        fillers::{
-            BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller,
-            WalletFiller,
-        },
-        Identity, Provider, ProviderBuilder, RootProvider,
-    },
-    signers::local::PrivateKeySigner,
-    sol,
-    transports::http::{Client, Http},
-};
+//! To run the binary:
+//!
+//!     `cargo run --release --bin operator`
+use alloy::primitives::B256;
 use anyhow::Result;
-use blobstream_script::util::TendermintRPCClient;
-use blobstream_script::{relay, TendermintProver};
+use core::str::FromStr;
+use fuelstreamx_sp1_script::ethereum_client::FuelStreamXEthereumClient;
+use fuelstreamx_sp1_script::plonk_client::FuelStreamXPlonkClient;
+use fuelstreamx_sp1_script::tendermint_client::FuelStreamXTendermintClient;
 use log::{error, info};
-use primitives::get_header_update_verdict;
-use sp1_sdk::{
-    HashableKey, ProverClient, SP1ProofWithPublicValues, SP1ProvingKey, SP1Stdin, SP1VerifyingKey,
-};
 use std::env;
-use std::sync::Arc;
-use std::time::Duration;
-use tendermint_light_client_verifier::Verdict;
+use std::result::Result::Ok;
+use tendermint_light_client::verifier::types::Height;
+use tendermint_rpc::{Client, Url};
 
-const ELF: &[u8] = include_bytes!("../../elf/blobstream-elf");
+use sp1_sdk::SP1ProofWithPublicValues;
 
-/// Alias the fill provider for the Ethereum network. Retrieved from the instantiation of the
-/// ProviderBuilder. Recommended method for passing around a ProviderBuilder.
-type EthereumFillProvider = FillProvider<
-    JoinFill<
-        JoinFill<
-            Identity,
-            JoinFill<GasFiller, JoinFill<BlobGasFiller, JoinFill<NonceFiller, ChainIdFiller>>>,
-        >,
-        WalletFiller<EthereumWallet>,
-    >,
-    RootProvider<Http<Client>>,
-    Http<Client>,
-    Ethereum,
->;
-
-struct SP1BlobstreamOperator {
-    client: ProverClient,
-    pk: SP1ProvingKey,
-    vk: SP1VerifyingKey,
-    wallet_filler: Arc<EthereumFillProvider>,
-    contract_address: Address,
-    relayer_address: Address,
-    chain_id: u64,
-    use_kms_relayer: bool,
+pub struct FuelStreamXOperator {
+    ethereum_client: FuelStreamXEthereumClient,
+    tendermint_client: FuelStreamXTendermintClient,
+    plonk_client: FuelStreamXPlonkClient,
+    minimum_block_range: u64,
 }
 
-sol! {
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    contract SP1Blobstream {
-        bool public frozen;
-        uint64 public latestBlock;
-        uint256 public state_proofNonce;
-        mapping(uint64 => bytes32) public blockHeightToHeaderHash;
-        mapping(uint256 => bytes32) public state_dataCommitments;
-        uint64 public constant DATA_COMMITMENT_MAX = 10000;
-        bytes32 public blobstreamProgramVkey;
-        address public verifier;
-
-        function commitHeaderRange(bytes calldata proof, bytes calldata publicValues) external;
-    }
-}
-
-// Timeout for the proof in seconds.
-const PROOF_TIMEOUT_SECONDS: u64 = 60 * 30;
-
-const NUM_RELAY_RETRIES: u32 = 3;
-
-impl SP1BlobstreamOperator {
+impl FuelStreamXOperator {
+    /// Constructs a new FuelStreamX operator. Expects that the .env file is loaded
     pub async fn new() -> Self {
-        dotenv::dotenv().ok();
+        let minimum_block_range = env::var("MINIMUM_BLOCK_RANGE")
+            .map(|t| {
+                t.parse::<u64>()
+                    .expect("MINIMUM_BLOCK_RANGE must be a valid number")
+            })
+            .unwrap_or(512);
 
-        let client = ProverClient::new();
-        let (pk, vk) = client.setup(ELF);
-        let use_kms_relayer: bool = env::var("USE_KMS_RELAYER")
-            .unwrap_or("false".to_string())
-            .parse()
-            .unwrap();
-        let chain_id: u64 = env::var("CHAIN_ID")
-            .expect("CHAIN_ID not set")
-            .parse()
-            .unwrap();
-        let rpc_url = env::var("RPC_URL")
-            .expect("RPC_URL not set")
-            .parse()
-            .unwrap();
+        // -------- Ethereum Config
 
+        let ethereum_rpc_url = env::var("RPC_URL").expect("RPC_URL not set");
         let private_key = env::var("PRIVATE_KEY").expect("PRIVATE_KEY not set");
-        let contract_address = env::var("CONTRACT_ADDRESS")
-            .expect("CONTRACT_ADDRESS not set")
-            .parse()
-            .unwrap();
-        let signer: PrivateKeySigner = private_key.parse().expect("Failed to parse private key");
-        let relayer_address = signer.address();
-        let wallet = EthereumWallet::from(signer);
-        let provider = ProviderBuilder::new()
-            .with_recommended_fillers()
-            .wallet(wallet)
-            .on_http(rpc_url);
+        let contract_address = env::var("CONTRACT_ADDRESS").expect("CONTRACT_ADDRESS not set");
+
+        let ethereum_client = FuelStreamXEthereumClient::new(
+            ethereum_rpc_url.as_str(),
+            private_key.as_str(),
+            contract_address.as_str(),
+        )
+        .await;
+
+        // -------- Tendermint Config
+
+        let tendermint_rpc_url_env =
+            env::var("TENDERMINT_RPC_URL").expect("TENDERMINT_RPC_URL not set");
+        let tendermint_rpc_url = Url::from_str(&tendermint_rpc_url_env)
+            .expect("failed to parse TENDERMINT_RPC_URL string");
+        let tendermint_grpc_url_env =
+            env::var("TENDERMINT_GRPC_URL").expect("TENDERMINT_GRPC_URL not set");
+        let tendermint_grpc_basic_auth =
+            env::var("TENDERMINT_GRPC_BASIC_AUTH").expect("TENDERMINT_GRPC_BASIC_AUTH not set");
+
+        let tendermint_client = FuelStreamXTendermintClient::new(
+            tendermint_rpc_url,
+            tendermint_grpc_url_env,
+            tendermint_grpc_basic_auth,
+        )
+        .await;
+
+        // -------- SP1 Config
+
+        let sp1_timeout = env::var("SP1_TIMEOUT_MINS")
+            .map(|t| {
+                t.parse::<u64>()
+                    .expect("SP1_TIMEOUT_MINS must be a valid number")
+            })
+            .unwrap_or(60);
+
+        let plonk_client = FuelStreamXPlonkClient::new(sp1_timeout * 60).await;
 
         Self {
-            client,
-            pk,
-            vk,
-            wallet_filler: Arc::new(provider),
-            chain_id,
-            contract_address,
-            relayer_address,
-            use_kms_relayer,
+            ethereum_client,
+            tendermint_client,
+            plonk_client,
+            minimum_block_range,
         }
     }
 
     /// Check the verifying key in the contract matches the verifying key in the prover.
-    async fn check_vkey(&self) -> Result<()> {
-        let contract = SP1Blobstream::new(self.contract_address, self.wallet_filler.clone());
-        let verifying_key = contract
-            .blobstreamProgramVkey()
-            .call()
-            .await?
-            .blobstreamProgramVkey;
+    async fn check_v_key(&self) -> Result<()> {
+        let ethereum_v_key = self.ethereum_client.get_v_key().await;
+        let prover_v_key = self.plonk_client.get_v_key_hash();
 
-        if verifying_key.0.to_vec()
-            != hex::decode(self.vk.bytes32().strip_prefix("0x").unwrap()).unwrap()
-        {
+        if ethereum_v_key.to_string() != prover_v_key {
             return Err(anyhow::anyhow!(
-                    "The verifying key in the operator does not match the verifying key in the contract!"
-                ));
+                "the verifying key of the elf does not match the verifying key in the contract"
+            ));
         }
 
         Ok(())
     }
 
-    async fn request_header_range(
-        &self,
-        trusted_block: u64,
-        target_block: u64,
-    ) -> Result<SP1ProofWithPublicValues> {
-        let prover = TendermintProver::new();
-        let mut stdin = SP1Stdin::new();
+    pub async fn run(&mut self) -> Result<Option<(SP1ProofWithPublicValues, B256)>> {
+        self.check_v_key().await.expect("check vKey failed");
 
-        let inputs = prover
-            .fetch_input_for_blobstream_proof(trusted_block, target_block)
+        // Get latest light client sync from Ethereum
+        let bridge_commitment_max = self.ethereum_client.get_bridge_commitment_max().await;
+        let (light_client_height, light_client_hash) = self.ethereum_client.get_latest_sync().await;
+
+        // Assertion to check if a correct tendermint node is in use
+        assert!(light_client_hash == B256::from_slice(
+            self.tendermint_client
+                .rpc_client
+                .commit(Height::try_from(light_client_height).unwrap())
+                .await
+                .expect("failed to get a commit from the Tendermint node")
+                .signed_header
+                .header
+                .hash()
+                .as_bytes()
+        ),
+            "latest light client header hash on Ethereum does not match with the corresponding one on the Tendermint node"
+        );
+
+        // Get the head of the Tendermint chain
+        let latest_tendermint_block = self
+            .tendermint_client
+            .rpc_client
+            .latest_commit()
+            .await
+            .expect("failed to get the latest commit from Tendermint node");
+
+        // Maximum light client iteration
+        let max_block = std::cmp::min(
+            latest_tendermint_block.signed_header.header.height.value(),
+            light_client_height + bridge_commitment_max,
+        );
+
+        if max_block == light_client_height
+            || (max_block - light_client_height) < self.minimum_block_range
+        {
+            info!("not enough blocks have been generated for a new light client update, sleeping");
+            return Ok(None);
+        }
+
+        // Call the circuit
+        let proof_inputs = self
+            .tendermint_client
+            .fetch_proof_inputs(light_client_height, max_block)
             .await;
 
-        // Simulate the step from the trusted block to the target block.
-        let verdict =
-            get_header_update_verdict(&inputs.trusted_light_block, &inputs.target_light_block);
-        assert_eq!(verdict, Verdict::Success);
-
-        let encoded_proof_inputs = serde_cbor::to_vec(&inputs)?;
-        stdin.write_vec(encoded_proof_inputs);
-
-        self.client
-            .prove(&self.pk, stdin)
-            .plonk()
-            .timeout(Duration::from_secs(PROOF_TIMEOUT_SECONDS))
-            .run()
-    }
-
-    /// Relay a header range proof to the SP1 Blobstream contract.
-    async fn relay_header_range(&self, proof: SP1ProofWithPublicValues) -> Result<B256> {
-        // TODO: sp1_sdk should return empty bytes in mock mode.
-        let proof_as_bytes = if env::var("SP1_PROVER").unwrap().to_lowercase() == "mock" {
-            vec![]
-        } else {
-            proof.bytes()
-        };
-
-        let contract = SP1Blobstream::new(self.contract_address, self.wallet_filler.clone());
-
-        if self.use_kms_relayer {
-            let proof_bytes = proof_as_bytes.clone().into();
-            let public_values = proof.public_values.to_vec().into();
-            let commit_header_range = contract.commitHeaderRange(proof_bytes, public_values);
-            relay::relay_with_kms(
-                &relay::KMSRelayRequest {
-                    chain_id: self.chain_id,
-                    address: self.contract_address.to_checksum(None),
-                    calldata: commit_header_range.calldata().to_string(),
-                    platform_request: false,
-                },
-                NUM_RELAY_RETRIES,
-            )
+        let proof_output = self
+            .plonk_client
+            .generate_proof(proof_inputs.clone())
             .await
-        } else {
-            let public_values_bytes = proof.public_values.to_vec();
+            .expect("failed to generate proof");
 
-            let gas_limit = relay::get_gas_limit(self.chain_id);
-            let max_fee_per_gas =
-                relay::get_fee_cap(self.chain_id, self.wallet_filler.root()).await;
+        // Submit on-chain
+        let public_values_bytes = proof_output.public_values.to_vec();
+        let tx_hash = self
+            .ethereum_client
+            .commit_header_range(proof_output.bytes().into(), public_values_bytes.into())
+            .await
+            .expect("failed to submit proof on-chain");
 
-            let nonce = self
-                .wallet_filler
-                .get_transaction_count(self.relayer_address)
-                .await?;
-
-            // Wait for 3 required confirmations with a timeout of 60 seconds.
-            const NUM_CONFIRMATIONS: u64 = 3;
-            const TIMEOUT_SECONDS: u64 = 60;
-            let receipt = contract
-                .commitHeaderRange(proof_as_bytes.into(), public_values_bytes.into())
-                .gas_price(max_fee_per_gas)
-                .gas(gas_limit)
-                .nonce(nonce)
-                .send()
-                .await?
-                .with_required_confirmations(NUM_CONFIRMATIONS)
-                .with_timeout(Some(Duration::from_secs(TIMEOUT_SECONDS)))
-                .get_receipt()
-                .await?;
-
-            // If status is false, it reverted.
-            if !receipt.status() {
-                error!("Transaction reverted!");
-            }
-
-            Ok(receipt.transaction_hash)
-        }
-    }
-
-    async fn run(&self) -> Result<()> {
-        self.check_vkey().await?;
-
-        let fetcher = TendermintRPCClient::default();
-        let block_update_interval = get_block_update_interval();
-
-        let contract = SP1Blobstream::new(self.contract_address, self.wallet_filler.clone());
-
-        // Read the data commitment max from the contract.
-        let data_commitment_max = contract
-            .DATA_COMMITMENT_MAX()
-            .call()
-            .await?
-            .DATA_COMMITMENT_MAX;
-
-        // Get the latest block from the contract.
-        let current_block = contract.latestBlock().call().await?.latestBlock;
-
-        // Get the head of the chain.
-        let latest_tendermint_block_nb = fetcher.get_latest_block_height().await;
-
-        // Subtract 1 block to ensure the block is stable.
-        let latest_stable_tendermint_block = latest_tendermint_block_nb - 1;
-
-        // block_to_request is the closest interval of block_interval less than min(latest_stable_tendermint_block, data_commitment_max + current_block)
-        let max_block = std::cmp::min(
-            latest_stable_tendermint_block,
-            data_commitment_max + current_block,
+        info!(
+            "posted bridge commitment with block range {} to {}. Transaction hash: {}",
+            proof_inputs.trusted_light_block.height().value(),
+            proof_inputs.target_light_block.height().value(),
+            tx_hash
         );
-        let block_to_request = max_block - (max_block % block_update_interval);
 
-        // If block_to_request is greater than the current block in the contract, attempt to request.
-        if block_to_request > current_block {
-            // The next block the operator should request.
-            let max_end_block = block_to_request;
-
-            let target_block = fetcher
-                .find_block_to_request(current_block, max_end_block)
-                .await;
-
-            info!("Current block: {}", current_block);
-            info!("Attempting to step to block {}", target_block);
-
-            // Request a header range if the target block is not the next block.
-            match self.request_header_range(current_block, target_block).await {
-                Ok(proof) => {
-                    let tx_hash = self.relay_header_range(proof).await?;
-                    info!(
-                        "Posted data commitment from block {} to block {}\nTransaction hash: {}",
-                        current_block, target_block, tx_hash
-                    );
-                }
-                Err(e) => {
-                    return Err(anyhow::anyhow!("Header range request failed: {}", e));
-                }
-            };
-        } else {
-            info!("Next block to request is {} which is > the head of the Tendermint chain which is {}. Sleeping.", block_to_request + block_update_interval, latest_stable_tendermint_block);
-        }
-        Ok(())
+        Ok(Some((proof_output, tx_hash)))
     }
-}
-
-fn get_loop_interval_mins() -> u64 {
-    let loop_interval_mins_env = env::var("LOOP_INTERVAL_MINS");
-    let mut loop_interval_mins = 60;
-    if loop_interval_mins_env.is_ok() {
-        loop_interval_mins = loop_interval_mins_env
-            .unwrap()
-            .parse::<u64>()
-            .expect("invalid LOOP_INTERVAL_MINS");
-    }
-    loop_interval_mins
-}
-
-fn get_block_update_interval() -> u64 {
-    let block_update_interval_env = env::var("BLOCK_UPDATE_INTERVAL");
-    let mut block_update_interval = 360;
-    if block_update_interval_env.is_ok() {
-        block_update_interval = block_update_interval_env
-            .unwrap()
-            .parse::<u64>()
-            .expect("invalid BLOCK_UPDATE_INTERVAL");
-    }
-    block_update_interval
 }
 
 #[tokio::main]
@@ -319,22 +175,14 @@ async fn main() {
     dotenv::dotenv().ok();
     env_logger::init();
 
-    let operator = SP1BlobstreamOperator::new().await;
-
-    info!("Starting SP1 Blobstream operator");
-    const LOOP_TIMEOUT_MINS: u64 = 20;
-    loop {
-        let request_interval_mins = get_loop_interval_mins();
-        // If the operator takes longer than LOOP_TIMEOUT_MINS for a single invocation, or there's
-        // an error, sleep for the loop interval and try again.
-        if let Err(e) = tokio::time::timeout(
-            tokio::time::Duration::from_secs(60 * LOOP_TIMEOUT_MINS),
-            operator.run(),
-        )
-        .await
-        {
-            error!("Error running operator: {}", e);
-        }
-        tokio::time::sleep(tokio::time::Duration::from_secs(60 * request_interval_mins)).await;
+    // Run operator with a timeout, the timeout should be long enough to generate a ZK proof
+    let mut operator = FuelStreamXOperator::new().await;
+    if let Err(e) = tokio::time::timeout(
+        tokio::time::Duration::from_secs(operator.plonk_client.timeout),
+        operator.run(),
+    )
+    .await
+    {
+        error!("Error running operator: {}", e);
     }
 }

@@ -13,8 +13,8 @@ pub fn get_header_update_verdict(trusted_block: &LightBlock, target_block: &Ligh
     let opt = Options {
         // Note: For additional security, set the trust threshold to 2/3.
         trust_threshold: TrustThreshold::TWO_THIRDS,
-        // 2 week trusting period is valid for chains with 21 day unbonding period.
-        trusting_period: Duration::from_secs(14 * 24 * 60 * 60),
+        // 9 days trusting period is valid for chains with 14 day unbonding period.
+        trusting_period: Duration::from_secs(9 * 24 * 60 * 60),
         clock_drift: Duration::ZERO,
     };
 
@@ -24,6 +24,7 @@ pub fn get_header_update_verdict(trusted_block: &LightBlock, target_block: &Ligh
     // far in the past, which is a potential issue. Deployers must ensure that the target block is not
     // too far in the past, i.e. the light client must be relatively synced with the chain (i.e.
     // within the trusting period).
+    // TODO: https://github.com/fuel-infrastructure/sp1-fuelstream/issues/1
     let verify_time = target_block.time() + Duration::from_secs(10);
     vp.verify_update_header(
         target_block.as_untrusted_state(),

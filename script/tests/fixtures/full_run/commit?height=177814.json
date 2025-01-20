@@ -1,0 +1,64 @@
+{
+  "jsonrpc": "2.0",
+  "id": -1,
+  "result": {
+    "signed_header": {
+      "header": {
+        "version": {
+          "block": "11"
+        },
+        "chain_id": "seq-testnet-2",
+        "height": "177814",
+        "time": "2024-12-16T09:11:42.850921215Z",
+        "last_block_id": {
+          "hash": "8C3DE649EE3F6FDCB73A1E11CD2432AB10FAA534F4AB13713D07E163296E3876",
+          "parts": {
+            "total": 1,
+            "hash": "709AEF88C74F966E2D515A99869C8B14E26E3239D6679124F0B6D8A4ED257787"
+          }
+        },
+        "last_commit_hash": "F6F8C3E31D2C480E5CBE17F35E17FC2ABCE072BE991DFA8273CE5EDD6D78A6BD",
+        "data_hash": "07217C5FEEB6187B05DC980FDFFA6CDED43F897EF988C7F0A908E5B5C5B8C28C",
+        "validators_hash": "A6AE7CC428B6C983F22AF6046293567B6A686F921616A3EA812C561E35E5FBF7",
+        "next_validators_hash": "A6AE7CC428B6C983F22AF6046293567B6A686F921616A3EA812C561E35E5FBF7",
+        "consensus_hash": "2F241FE85AE172797222662D77D23602F36BD68B53BB3C320434046C979875F8",
+        "app_hash": "B481FD95A87B5315E0E4BBADC26353003E386E661BFCD9CCC2AC3BCFB1553F08",
+        "last_results_hash": "0DA220D3D6EE114065DB878F5C71070354DAE04196AF12C216F9FDED83CFEC4A",
+        "evidence_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+        "proposer_address": "A9B053F7486730642D573D28C0ACB044E6D0A822"
+      },
+      "commit": {
+        "height": "177814",
+        "round": 0,
+        "block_id": {
+          "hash": "9496FD360B2694E35589004D03F9CDF6AA36DE8C72E726773D306CF579C056F4",
+          "parts": {
+            "total": 1,
+            "hash": "1D526CC0B987DBF8CB83E56235021F4FC403B7D42DDF93C82FAD4CF676B8DB43"
+          }
+        },
+        "signatures": [
+          {
+            "block_id_flag": 2,
+            "validator_address": "A9B053F7486730642D573D28C0ACB044E6D0A822",
+            "timestamp": "2024-12-16T09:11:47.856271906Z",
+            "signature": "rKvXd45eZqh6IMxAclZpIs5igk1EDZs3d+RbK9/gRPrxFI+n6OGmaTKuCcC1Cd/YkDoa9Ek+ol+FQOCTfE4/Bg=="
+          },
+          {
+            "block_id_flag": 3,
+            "validator_address": "C7F0068A53F520E752D7800A1C8422F9426B53E0",
+            "timestamp": "2024-12-16T09:11:47.983431989Z",
+            "signature": "e9FhPUg2AKCVAe2K9ndGWYRtoGz1ugHRP3eecnSktINmXWwf3jv+L4ZXDqc/Y2PHt+T4bd/5X9MBXCXikFPpAA=="
+          },
+          {
+            "block_id_flag": 3,
+            "validator_address": "6EA576CC7FE8A39F8ED1358E37A93ABE0930ECA9",
+            "timestamp": "2024-12-16T09:11:47.968084194Z",
+            "signature": "Wh8Px9OsmT6oo5b3LP2XDbuO7WPOoUr3NVS+sGUvqjKvVYe7XgzdIpmRHI8rw0Ee1THYt1DPGeODLq7ncVedCQ=="
+          }
+        ]
+      }
+    },
+    "canonical": true
+  }
+}
