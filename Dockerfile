@@ -14,7 +14,7 @@ RUN cargo build --bin operator --release
 # Runner
 # --------------------------------------------------------
 
-FROM alpine AS runner
+FROM debian:bookworm-slim AS runner
 
 ENV RUST_LOG=info
 ENV TIME_TO_SLEEP_IN_MINUTES=30
@@ -25,12 +25,15 @@ WORKDIR /app
 COPY --from=builder /app/target/release/operator ./operator
 COPY --from=builder /app/elf ./elf
 
-# Install bash for wait-for-it script
-RUN apk add --no-cache bash
+# Install bash for wait-for-it script and libssl3 
+RUN apt-get update && apt-get install -y \
+  bash \
+  libssl3 \
+  && rm -rf /var/lib/apt/lists/*
 
 # Give permissions to wait-for-it.sh
 COPY scripts/wait-for-it.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/wait-for-it.sh
 
 # Run the command and wait to delay the restart
-ENTRYPOINT [ "sh", "-c", "wait-for-it.sh -t ${TIME_TO_SLEEP_IN_MINUTES} -- RUST_LOG=${RUST_LOG} ./operator" ]
+ENTRYPOINT ["/bin/sh", "-c", "wait-for-it.sh -t ${TIME_TO_SLEEP_IN_MINUTES} -- env RUST_LOG=${RUST_LOG} ./operator"]

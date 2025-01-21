@@ -20,7 +20,7 @@ To run the operator use the following command. This always the container to be r
 minutes regardless of the exit code:
 
 ```
-docker run --restart=always -e RUST_LOG=info -e TIME_TO_SLEEP_IN_MINUTES=30 sp1-fuelstreamx-operator
+docker run --restart=always --env-file .env sp1-fuelstreamx-operator
 ```
 
 ## Tests
