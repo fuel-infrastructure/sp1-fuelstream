@@ -1,7 +1,7 @@
 
 Forked from [sp1-blobstream using commit cbd1ee173a9acf8cda80bf4b6ed093623dd7e0a9, supporter sp1 v3.0.0](https://github.com/succinctlabs/sp1-blobstream/tree/cbd1ee173a9acf8cda80bf4b6ed093623dd7e0a9)
 
-## Build & Run
+## Build & Run with Docker
 
 Circuit Building to Create Elf:
 
@@ -10,16 +10,17 @@ cd ./program
 cargo prove build --docker --tag v3.0.0 --elf-name fuelstreamx-elf
 ```
 
-Running: 
+To build: 
 
 ```sh
-cargo run --release --bin operator
+docker build -t sp1-fuelstreamx-operator  .
 ```
 
-To get the genesis parameters for the smart-contract:
+To run use the following command. This always the container to be restarted every `x` minutes regardless 
+of the exit code:
 
-```sh
-cargo run --release --bin genesis
+```
+docker run --restart=always -e RUST_LOG=info -e TIME_TO_SLEEP_IN_MINUTES=30 sp1-fuelstreamx-operator
 ```
 
 ## Tests
@@ -28,3 +29,13 @@ cargo run --release --bin genesis
 cd ./scripts
 cargo test
 ```
+
+## Ethereum Contract Parameters
+
+To get the genesis parameters for the smart-contract:
+
+```sh
+cargo run --release --bin genesis -- --block <height>
+```
+
+This gives the `vKey`, the `genesis height` and the `genesis header hash`. 
