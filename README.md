@@ -10,14 +10,14 @@ cd ./program
 cargo prove build --docker --tag v3.0.0 --elf-name fuelstreamx-elf
 ```
 
-To build: 
+To build operator: 
 
 ```sh
 docker build -t sp1-fuelstreamx-operator  .
 ```
 
-To run use the following command. This always the container to be restarted every `x` minutes regardless 
-of the exit code:
+To run the operator use the following command. This always the container to be restarted every `x` 
+minutes regardless of the exit code:
 
 ```
 docker run --restart=always -e RUST_LOG=info -e TIME_TO_SLEEP_IN_MINUTES=30 sp1-fuelstreamx-operator

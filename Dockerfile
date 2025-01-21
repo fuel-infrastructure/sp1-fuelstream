@@ -14,7 +14,7 @@ RUN cargo build --bin operator --release
 # Runner
 # --------------------------------------------------------
 
-FROM debian:slim AS runner
+FROM alpine AS runner
 
 ENV RUST_LOG=info
 ENV TIME_TO_SLEEP_IN_MINUTES=30
@@ -26,7 +26,7 @@ COPY --from=builder /app/target/release/operator ./operator
 COPY --from=builder /app/elf ./elf
 
 # Install bash for wait-for-it script
-RUN apt-get update && apt-get install -y bash && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache bash
 
 # Give permissions to wait-for-it.sh
 COPY scripts/wait-for-it.sh /usr/local/bin/
