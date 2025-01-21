@@ -25,11 +25,14 @@ WORKDIR /app
 COPY --from=builder /app/target/release/operator ./operator
 COPY --from=builder /app/elf ./elf
 
-# Install bash for wait-for-it script and libssl3 
+# Install bash for wait-for-it script and other dependencies for HTTP calls 
 RUN apt-get update && apt-get install -y \
   bash \
   libssl3 \
-  && rm -rf /var/lib/apt/lists/*
+  ca-certificates \
+  openssl \
+  && rm -rf /var/lib/apt/lists/* \
+  && update-ca-certificates
 
 # Give permissions to wait-for-it.sh
 COPY scripts/wait-for-it.sh /usr/local/bin/
