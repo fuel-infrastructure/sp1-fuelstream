@@ -114,7 +114,7 @@ impl FuelStreamXTendermintClient {
             .await;
 
         info!(
-            "next light client update, starting block {} to block {} and commitment {}",
+            "next light client update, starting block {} to block {} and commitment 0x{}",
             start_light_block.height().value(),
             end_light_block.height().value(),
             hex::encode(bridge_commitment.clone())
