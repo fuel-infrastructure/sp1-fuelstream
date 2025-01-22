@@ -4,6 +4,7 @@ Forked from [sp1-blobstream using commit cbd1ee173a9acf8cda80bf4b6ed093623dd7e0a
 
 ## Build & Run with Docker
 
+This step is only required if there were changes to the circuit found in `/program`. 
 You first need to download [sp1](https://docs.succinct.xyz/docs/getting-started/install). Afterwards, build the circuit to generate the `elf`:
 
 ```sh
@@ -16,10 +17,10 @@ To build operator:
 docker build -t sp1-fuelstreamx-operator  .
 ```
 
-To run the operator use the following command. This always the container to be restarted every `x` 
+To run the operator use the following command. This allows the container to be restarted every `x` 
 minutes regardless of the exit code:
 
-```
+```sh
 docker run --restart=always --env-file .env sp1-fuelstreamx-operator
 ```
 
