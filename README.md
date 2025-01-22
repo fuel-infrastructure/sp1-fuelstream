@@ -1,13 +1,12 @@
 
-Forked from [sp1-blobstream using commit cbd1ee173a9acf8cda80bf4b6ed093623dd7e0a9, supporter sp1 v3.0.0](https://github.com/succinctlabs/sp1-blobstream/tree/cbd1ee173a9acf8cda80bf4b6ed093623dd7e0a9)
+Forked from [sp1-blobstream using commit cbd1ee173a9acf8cda80bf4b6ed093623dd7e0a9](https://github.com/succinctlabs/sp1-blobstream/tree/cbd1ee173a9acf8cda80bf4b6ed093623dd7e0a9), currently supporting [sp1 v3.0.0](https://github.com/succinctlabs/sp1/releases/tag/v3.0.0).
 
 ## Build & Run with Docker
 
-Circuit Building to Create Elf:
+You first need to download [sp1](https://docs.succinct.xyz/docs/getting-started/install). Afterwards, build the circuit to generate the `elf`:
 
 ```sh
-cd ./program
-cargo prove build --docker --tag v3.0.0 --elf-name fuelstreamx-elf
+cd ./program && cargo prove build --docker --tag v3.0.0 --elf-name fuelstreamx-elf
 ```
 
 To build operator: 

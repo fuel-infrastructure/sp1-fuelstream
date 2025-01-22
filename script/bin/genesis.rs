@@ -31,14 +31,13 @@ pub async fn main() {
         env::var("TENDERMINT_RPC_URL").expect("TENDERMINT_RPC_URL not set");
     let tendermint_rpc_url =
         Url::from_str(&tendermint_rpc_url_env).expect("failed to parse TENDERMINT_RPC_URL string");
-    let tendermint_grpc_url_env =
-        env::var("TENDERMINT_GRPC_URL").expect("TENDERMINT_GRPC_URL not set");
+    let tendermint_grpc_url = env::var("TENDERMINT_GRPC_URL").expect("TENDERMINT_GRPC_URL not set");
     let tendermint_grpc_basic_auth =
         env::var("TENDERMINT_GRPC_BASIC_AUTH").expect("TENDERMINT_GRPC_BASIC_AUTH not set");
 
     let mut tendermint_client = FuelStreamXTendermintClient::new(
         tendermint_rpc_url,
-        tendermint_grpc_url_env,
+        tendermint_grpc_url,
         tendermint_grpc_basic_auth,
     )
     .await;
