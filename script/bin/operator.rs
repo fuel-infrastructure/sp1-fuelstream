@@ -172,6 +172,7 @@ impl FuelStreamXOperator {
 }
 
 #[tokio::main]
+#[allow(dead_code)]
 async fn main() {
     dotenv::dotenv().ok();
     env_logger::init();

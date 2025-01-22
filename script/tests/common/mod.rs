@@ -6,17 +6,20 @@ pub mod mock_tendermint_rpc_server;
 // Block 177843: Tx submitted to change voting power >66% at
 // Block 177845: Voting power change is committed
 #[cfg(test)]
+#[allow(dead_code)]
 pub const OVER_66_PERCENT_VOTING_POWER_CHANGE: &str = "over_66%_voting_power_change";
 
 // Fixture contains:
 // Block 215200: Tx submitted to change voting power >80% at
 // Block 215202: Voting power change is committed
 #[cfg(test)]
+#[allow(dead_code)]
 pub const OVER_85_PERCENT_VOTING_POWER_CHANGE: &str = "over_85%_voting_power_change";
 
 // Fixture contains:
 // All blocks from 1 - 30, with bridge commitment max being 30.
 #[cfg(test)]
+#[allow(dead_code)]
 pub const FULL_RUN: &str = "full_run";
 
 #[cfg(test)]

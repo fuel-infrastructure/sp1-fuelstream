@@ -9,6 +9,7 @@ pub mod tests {
 
     /// Spawn another thread for the rpc server
     #[cfg(test)]
+    #[allow(dead_code)]
     pub async fn spawn_ethereum_rpc_server(fixture_name: String) -> MockServer {
         let server = MockServer::start().await;
 

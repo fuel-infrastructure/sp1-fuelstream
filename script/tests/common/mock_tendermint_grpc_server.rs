@@ -17,18 +17,21 @@ pub mod tests {
     // Needed to load from json
     #[derive(Deserialize)]
     #[cfg(test)]
+    #[allow(dead_code)]
     struct BridgeCommitmentJson {
         bridge_commitment: String,
     }
 
     // Server
     #[cfg(test)]
+    #[allow(dead_code)]
     struct MockCommitmentsService {
         fixture_name: String,
     }
 
     #[tonic::async_trait]
     #[cfg(test)]
+    #[allow(dead_code)]
     impl Query for MockCommitmentsService {
         async fn bridge_commitment(
             &self,
@@ -69,6 +72,7 @@ pub mod tests {
 
     /// Spawn another thread for the grpc server
     #[cfg(test)]
+    #[allow(dead_code)]
     pub async fn spawn_tendermint_grpc_server(fixture_name: String) -> String {
         // Start gRPC server on a random port
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
