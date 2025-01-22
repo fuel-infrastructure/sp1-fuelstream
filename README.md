@@ -27,8 +27,8 @@ To build operator:
 docker build -t sp1-fuelstreamx-operator  .
 ```
 
-To run the operator use the following command. This allows the container to be restarted every `x` 
-minutes regardless of the exit code:
+Before running the docker container, create an `.env` file with the variables emphasised in the `.env.example` file. 
+This allows the container to be restarted every x minutes regardless of the exit code:
 
 ```sh
 docker run --restart=always --env-file .env sp1-fuelstreamx-operator
