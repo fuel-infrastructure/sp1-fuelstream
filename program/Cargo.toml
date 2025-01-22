@@ -1,6 +1,6 @@
 [package]
 version = "0.1.0"
-name = "fuelstreamx-sp1-program"
+name = "sp1-fuelstreamx-program"
 edition = "2021"
 
 [dependencies]

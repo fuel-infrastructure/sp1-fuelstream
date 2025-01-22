@@ -2660,53 +2660,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fuelstreamx-sp1-program"
-version = "0.1.0"
-dependencies = [
- "alloy",
- "primitives",
- "serde_cbor",
- "sha2 0.10.8",
- "sp1-zkvm",
- "tendermint",
- "tendermint-light-client-verifier",
-]
-
-[[package]]
-name = "fuelstreamx-sp1-script"
-version = "0.1.0"
-dependencies = [
- "alloy",
- "anyhow",
- "async-trait",
- "chrono",
- "clap",
- "csv",
- "dotenv",
- "env_logger",
- "fuel-sequencer-proto",
- "futures",
- "hex",
- "log",
- "primitives",
- "reqwest 0.11.27",
- "serde",
- "serde_cbor",
- "serde_json",
- "sp1-build",
- "sp1-sdk",
- "subtle-encoding",
- "tendermint",
- "tendermint-light-client",
- "tendermint-light-client-verifier",
- "tendermint-rpc",
- "tokio",
- "tokio-stream",
- "tonic",
- "wiremock",
-]
-
-[[package]]
 name = "funty"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5925,6 +5878,53 @@ checksum = "5f1490c07bd283f59169eae6e67df355b5de8ba10cc75bf6dbfc05a28fdccfc6"
 dependencies = [
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "sp1-fuelstreamx-program"
+version = "0.1.0"
+dependencies = [
+ "alloy",
+ "primitives",
+ "serde_cbor",
+ "sha2 0.10.8",
+ "sp1-zkvm",
+ "tendermint",
+ "tendermint-light-client-verifier",
+]
+
+[[package]]
+name = "sp1-fuelstreamx-script"
+version = "0.1.0"
+dependencies = [
+ "alloy",
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "clap",
+ "csv",
+ "dotenv",
+ "env_logger",
+ "fuel-sequencer-proto",
+ "futures",
+ "hex",
+ "log",
+ "primitives",
+ "reqwest 0.11.27",
+ "serde",
+ "serde_cbor",
+ "serde_json",
+ "sp1-build",
+ "sp1-sdk",
+ "subtle-encoding",
+ "tendermint",
+ "tendermint-light-client",
+ "tendermint-light-client-verifier",
+ "tendermint-rpc",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "wiremock",
 ]
 
 [[package]]

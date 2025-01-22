@@ -4,9 +4,9 @@
 use alloy::primitives::B256;
 use clap::Parser;
 use core::str::FromStr;
-use fuelstreamx_sp1_script::plonk_client::FuelStreamXPlonkClient;
-use fuelstreamx_sp1_script::tendermint_client::FuelStreamXTendermintClient;
 use log::info;
+use sp1_fuelstreamx_script::plonk_client::FuelStreamXPlonkClient;
+use sp1_fuelstreamx_script::tendermint_client::FuelStreamXTendermintClient;
 use std::env;
 use tendermint_rpc::Url;
 

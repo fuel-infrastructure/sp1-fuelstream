@@ -6,7 +6,7 @@ mod tests {
     use crate::common::mock_tendermint_rpc_server::tests::spawn_tendermint_rpc_server;
     use crate::common::{OVER_66_PERCENT_VOTING_POWER_CHANGE, OVER_85_PERCENT_VOTING_POWER_CHANGE};
 
-    use fuelstreamx_sp1_script::tendermint_client::FuelStreamXTendermintClient;
+    use sp1_fuelstreamx_script::tendermint_client::FuelStreamXTendermintClient;
 
     // The tendermint_light_client library uses synchronous calls, run the tests in async block_on
     // to avoid deadlocks. Don't use tokio's async runtime.

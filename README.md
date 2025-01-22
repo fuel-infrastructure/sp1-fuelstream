@@ -26,8 +26,7 @@ docker run --restart=always --env-file .env sp1-fuelstreamx-operator
 ## Tests
 
 ```sh
-cd ./scripts
-cargo test
+cargo test -p sp1-fuelstreamx-script
 ```
 
 ## Ethereum Contract Parameters

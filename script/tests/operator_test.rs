@@ -27,7 +27,10 @@ mod tests {
             let grpc_url = spawn_tendermint_grpc_server(FULL_RUN.to_string()).await;
 
             // ================= Ethereum
-            env::set_var("RPC_URL", format!("http://{}", eth_rpc_server.address()));
+            env::set_var(
+                "ETHEREUM_RPC_URL",
+                format!("http://{}", eth_rpc_server.address()),
+            );
             env::set_var(
                 "PRIVATE_KEY",
                 "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",

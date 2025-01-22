@@ -1,8 +1,8 @@
 //! To run the binary:
 //!
 //!     `cargo run --release --bin vkey`
-use fuelstreamx_sp1_script::plonk_client::FuelStreamXPlonkClient;
 use log::info;
+use sp1_fuelstreamx_script::plonk_client::FuelStreamXPlonkClient;
 use std::env;
 
 #[tokio::main]
