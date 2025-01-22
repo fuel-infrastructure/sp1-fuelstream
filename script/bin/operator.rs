@@ -152,6 +152,12 @@ impl FuelStreamXOperator {
             .await
             .expect("failed to generate proof");
 
+        info!(
+            "plonk proof outputs: {} \n public values {}",
+            hex::encode(proof_output.bytes()),
+            hex::encode(proof_output.public_values.to_vec())
+        );
+
         // Submit on-chain
         let public_values_bytes = proof_output.public_values.to_vec();
         let tx_hash = self

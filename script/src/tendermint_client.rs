@@ -1,7 +1,7 @@
 use fuel_sequencer_proto::protos::fuelsequencer::commitments::v1::{
     query_client::QueryClient as CommitmentQueryClient, QueryBridgeCommitmentRequest,
 };
-use log::debug;
+use log::{debug, info};
 use primitives::get_header_update_verdict;
 use primitives::types::ProofInputs;
 use std::time::Duration;
@@ -112,6 +112,13 @@ impl FuelStreamXTendermintClient {
                 end_light_block.height().value(),
             )
             .await;
+
+        info!(
+            "next light client update, starting block {} to block {} and commitment {}",
+            start_light_block.height().value(),
+            end_light_block.height().value(),
+            hex::encode(bridge_commitment.clone())
+        );
 
         ProofInputs {
             trusted_light_block: start_light_block,
