@@ -1,22 +1,22 @@
+## Sequencer
+
+To obtain the fixtures for the sequencer, you can use the normal tendermint RPC calls, usually on port 26657.
+
+To obtains the fixtures for grpc queries, you can use the swagger api as follows `<RPC>/swagger/#/Fuel%20Sequencer%20Queries/BridgeCommitment`.
+
 ## Ethereum
 
 The following are the abi encoded function selectors that are used in the tests as fixtures when calling `eth_call`:
 
 | Function name                   | Function ABI Encoded |
 | ------------------------------- | -------------------- |
-| latestBlock                     | 0x07e2da96           |
 | BRIDGE_COMMITMENT_MAX           | 0x382f7579           |
-| nonce (safe)                    | 0xaffed0e0           |
-| usedNonce                       | 0xe4f376f0           |
-| timeToFinalize                  | 0x4de5383b           |
+| latestBlock                     | 0x07e2da96           |
 | blockHeightToHeaderHash         | 0x08e93ea5           |
-| state_bridgeCommitments         | 0xcdecf045           |
-| commitmentTimestamp             | 0xfb6162b0           |
-| processSequencerSupplyUpdate    | 0x2290bf58           |
-| Aggregate3 (multicall contract) | 0x82ad56cb           |
 | vKey                            | 0x625baeab           |
 
-`eth_call`:
+To obtain any of the above, the following curl command with minor changes to the `method` and `params`. 
+For example `eth_call`:
 
 ```command
 curl -X POST -H "Content-Type: application/json" \
