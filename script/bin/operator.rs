@@ -5,9 +5,10 @@ use alloy::primitives::B256;
 use anyhow::Result;
 use core::str::FromStr;
 use log::{error, info};
-use sp1_fuelstreamx_script::ethereum_client::FuelStreamXEthereumClient;
-use sp1_fuelstreamx_script::plonk_client::FuelStreamXPlonkClient;
-use sp1_fuelstreamx_script::tendermint_client::FuelStreamXTendermintClient;
+use sp1_fuelstreamx_script::{
+    ethereum_client::FuelStreamXEthereumClient, plonk_client::FuelStreamXPlonkClient,
+    tendermint_client::FuelStreamXTendermintClient,
+};
 use std::env;
 use std::result::Result::Ok;
 use tendermint_light_client::verifier::types::Height;
