@@ -1,5 +1,5 @@
 
-# Deploy new Blobstream X contract
+# Deploy new FuelStreamX contract
 
 Fill out the following fields in `.env` in `contracts` folder:
 
