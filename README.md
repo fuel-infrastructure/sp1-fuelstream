@@ -10,7 +10,7 @@ The components are:
 `/primitives`: Libraries for types and helper functions used in the program.
 `/script`: Scripts for getting the contract's genesis parameters and deploying the operator to update the light client.
 
-Forked from [sp1-blobstream using commit cbd1ee173a9acf8cda80bf4b6ed093623dd7e0a9](https://github.com/succinctlabs/sp1-blobstream/tree/cbd1ee173a9acf8cda80bf4b6ed093623dd7e0a9), currently supporting [sp1 v3.0.0](https://github.com/succinctlabs/sp1/releases/tag/v3.0.0).
+Forked from [sp1-blobstream using commit cbd1ee173a9acf8cda80bf4b6ed093623dd7e0a9](https://github.com/succinctlabs/sp1-blobstream/tree/cbd1ee173a9acf8cda80bf4b6ed093623dd7e0a9), currently supporting [sp1 v4.0.1](https://github.com/succinctlabs/sp1/releases/tag/v4.0.1).
 
 ## Build & Run with Docker
 
@@ -18,7 +18,7 @@ This step is only required if there were changes to the circuit found in `/progr
 You first need to download [sp1](https://docs.succinct.xyz/docs/getting-started/install). Afterwards, build the circuit to generate the `elf`:
 
 ```sh
-cd ./program && cargo prove build --docker --tag v3.0.0 --elf-name fuelstreamx-elf
+cd ./program && cargo prove build --docker --tag v4.0.1 --elf-name fuelstreamx-elf
 ```
 
 To build operator: 

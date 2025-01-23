@@ -1,11 +1,15 @@
 use anyhow::Result;
 use downcast_rs::Downcast;
-use primitives::types::{ProofInputs, FUELSTREAMX_ELF};
+use primitives::types::ProofInputs;
+use sp1_sdk::include_elf;
 use sp1_sdk::{
     network::FulfillmentStrategy, CpuProver, EnvProver, HashableKey, NetworkProver, ProverClient,
     SP1ProofWithPublicValues, SP1ProvingKey, SP1Stdin, SP1VerifyingKey,
 };
 use std::time::Duration;
+
+/// The compiled ELF binary for the FuelStreamX circuit
+pub const FUELSTREAMX_ELF: &[u8] = include_elf!("fuelstreamx-elf");
 
 pub struct FuelStreamXPlonkClient {
     prover: EnvProver,
