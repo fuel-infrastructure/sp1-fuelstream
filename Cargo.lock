@@ -1807,12 +1807,13 @@ dependencies = [
 [[package]]
 name = "curve25519-dalek-ng"
 version = "4.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c359b7249347e46fb28804470d071c921156ad62b3eef5d34e2ba867533dec8"
+source = "git+https://github.com/sp1-patches/curve25519-dalek-ng?tag=patch-4.1.1-sp1-4.0.0#91543a452e80c81b03a6b65e84b726094ff39313"
 dependencies = [
  "byteorder",
+ "cfg-if",
  "digest 0.9.0",
  "rand_core",
+ "sp1-lib",
  "subtle-ng",
  "zeroize",
 ]
@@ -5317,8 +5318,7 @@ dependencies = [
 [[package]]
 name = "sha2"
 version = "0.9.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d58a1e1bf39749807d89cf2d98ac2dfa0ff1cb3faa38fbb64dd88ac8013d800"
+source = "git+https://github.com/sp1-patches/RustCrypto-hashes?tag=sha2-v0.9.9-patch-v1#db82a4848f8d033eab544255e1efa036cc06f054"
 dependencies = [
  "block-buffer 0.9.0",
  "cfg-if",
@@ -5330,8 +5330,7 @@ dependencies = [
 [[package]]
 name = "sha2"
 version = "0.10.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "793db75ad2bcafc3ffa7c68b215fee268f537982cd901d132f89c6343f3a3dc8"
+source = "git+https://github.com/sp1-patches/RustCrypto-hashes?tag=sha2-v0.10.8-patch-v1#1f224388fdede7cef649bce0d63876d1a9e3f515"
 dependencies = [
  "cfg-if",
  "cpufeatures",

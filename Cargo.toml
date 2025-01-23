@@ -35,3 +35,7 @@ tendermint-rpc = { version = "0.40.0", features = ["http-client"]}
 alloy = { version = "0.7.0", default-features = false, features = ["full"] }
 hex = "0.4.3"
 
+[patch.crates-io]
+sha2-v0-9-9 = { git = "https://github.com/sp1-patches/RustCrypto-hashes", package = "sha2", tag = "sha2-v0.9.9-patch-v1" }
+sha2-v0-10-8 = { git = "https://github.com/sp1-patches/RustCrypto-hashes", package = "sha2", tag = "sha2-v0.10.8-patch-v1" }
+curve25519-dalek-ng = { git = "https://github.com/sp1-patches/curve25519-dalek-ng", tag = "patch-4.1.1-sp1-4.0.0" }
