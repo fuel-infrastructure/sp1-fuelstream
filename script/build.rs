@@ -5,7 +5,6 @@ fn main() {
         "../program",
         BuildArgs {
             docker: true,
-            elf_name: Some("fuelstreamx-elf".to_string()),
             ..Default::default()
         },
     )

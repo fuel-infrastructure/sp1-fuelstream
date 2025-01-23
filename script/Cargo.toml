@@ -18,7 +18,7 @@ path = "bin/vkey.rs"
 [dependencies]
 primitives = { path = "../primitives" }
 
-alloy = { workspace = true, features = ["full"] }
+alloy = { version = "0.7.0", default-features = true, features = ["full"] }
 tendermint = { workspace = true }
 tendermint-light-client = { workspace = true }
 tendermint-light-client-verifier = { workspace = true, features = ["rust-crypto"] }
@@ -43,6 +43,7 @@ csv = { workspace = true }
 fuel-sequencer-proto="0.1.0"
 tonic = { version = "0.11", features = ["tls", "tls-roots"] }
 downcast-rs = "2.0.1"
+unicode-ident = "1.0"
 
 [build-dependencies]
 sp1-build = "4.0.1"

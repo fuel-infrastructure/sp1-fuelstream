@@ -9,7 +9,7 @@ use sp1_sdk::{
 use std::time::Duration;
 
 /// The compiled ELF binary for the FuelStreamX circuit
-pub const FUELSTREAMX_ELF: &[u8] = include_elf!("fuelstreamx-elf");
+pub const FUELSTREAMX_ELF: &[u8] = include_elf!("sp1-fuelstreamx-program");
 
 pub struct FuelStreamXPlonkClient {
     prover: EnvProver,
