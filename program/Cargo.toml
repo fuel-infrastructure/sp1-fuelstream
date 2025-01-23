@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 primitives = { path = "../primitives" }
-sp1-zkvm = "3.0.0"
+sp1-zkvm = "4.0.1"
 tendermint-light-client-verifier = { version = "0.40.0", default-features = false, features = [
     "rust-crypto",
 ] }

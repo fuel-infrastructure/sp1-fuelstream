@@ -1,12 +1,14 @@
 use anyhow::Result;
+use downcast_rs::Downcast;
 use primitives::types::{ProofInputs, FUELSTREAMX_ELF};
 use sp1_sdk::{
-    HashableKey, ProverClient, SP1ProofWithPublicValues, SP1ProvingKey, SP1Stdin, SP1VerifyingKey,
+    network::FulfillmentStrategy, CpuProver, EnvProver, HashableKey, NetworkProver, ProverClient,
+    SP1ProofWithPublicValues, SP1ProvingKey, SP1Stdin, SP1VerifyingKey,
 };
 use std::time::Duration;
 
 pub struct FuelStreamXPlonkClient {
-    prover: ProverClient,
+    prover: EnvProver,
     /// Used to generate a proof for a given RISC-V program.
     pk: SP1ProvingKey,
     /// Used to verify a proof for a given RISC-V program
@@ -18,7 +20,7 @@ pub struct FuelStreamXPlonkClient {
 impl FuelStreamXPlonkClient {
     /// Constructs a new FuelStreamX plonk client
     pub async fn new(timeout: u64) -> Self {
-        let prover_client = ProverClient::new();
+        let prover_client = ProverClient::from_env();
         let (pk, vk) = prover_client.setup(FUELSTREAMX_ELF);
 
         Self {
@@ -43,11 +45,26 @@ impl FuelStreamXPlonkClient {
         let encoded_proof_inputs = serde_cbor::to_vec(&inputs)?;
         stdin.write_vec(encoded_proof_inputs);
 
-        // Run, might take a while if on cpu and requires 128GB+ ram
-        self.prover
-            .prove(&self.pk, stdin)
-            .plonk()
-            .timeout(Duration::from_secs(self.timeout))
-            .run()
+        // Generate Proof
+        match self.prover.as_any() {
+            // If prover is not mocked, it might take a while and requires 128GB+ ram
+            prover if prover.is::<CpuProver>() => prover
+                .downcast_ref::<CpuProver>()
+                .unwrap()
+                .prove(&self.pk, &stdin)
+                .plonk()
+                .run(),
+            // Uses Succinct's on-demand prover to fulfill requests
+            prover if prover.is::<NetworkProver>() => prover
+                .downcast_ref::<NetworkProver>()
+                .unwrap()
+                .prove(&self.pk, &stdin)
+                .strategy(FulfillmentStrategy::Hosted)
+                .skip_simulation(true)
+                .plonk()
+                .timeout(Duration::from_secs(self.timeout))
+                .run(),
+            _ => panic!("unsupported prover type"),
+        }
     }
 }
