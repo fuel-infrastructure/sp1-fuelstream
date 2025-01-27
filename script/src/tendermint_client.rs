@@ -174,7 +174,7 @@ impl FuelStreamXTendermintClient {
     /// Get a block header within a range, end exclusive. Does not obtain the validators' voting
     /// power.
     pub async fn fetch_blocks_in_range(&self, start_block: u64, end_block: u64) -> Vec<Header> {
-        assert!(start_block < end_block, "start_block > max_end_block");
+        assert!(start_block < end_block, "start_block > end_block");
         debug!(
             "fetching light blocks between blocks {} and {}",
             start_block, end_block,
