@@ -2093,12 +2093,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "75b325c5dbd37f80359721ad39aca5a29fb04c89279657cffdda8736d0c0b9d2"
 
 [[package]]
-name = "downcast-rs"
-version = "2.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea8a8b81cacc08888170eef4d13b775126db426d0b348bee9d18c2c1eaf123cf"
-
-[[package]]
 name = "downloader"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4822,7 +4816,7 @@ version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3372685893a9f67d18e98e792d690017287fd17379a83d798d958e517d380fa9"
 dependencies = [
- "downcast-rs 1.2.1",
+ "downcast-rs",
  "num_enum 0.5.11",
  "paste",
 ]
@@ -5662,7 +5656,6 @@ dependencies = [
  "clap",
  "csv",
  "dotenv",
- "downcast-rs 2.0.1",
  "env_logger",
  "fuel-sequencer-proto",
  "futures",

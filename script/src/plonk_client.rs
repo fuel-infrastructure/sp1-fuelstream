@@ -1,4 +1,5 @@
 use anyhow::Result;
+use log::info;
 use primitives::types::ProofInputs;
 use sp1_sdk::include_elf;
 use sp1_sdk::{
@@ -25,6 +26,8 @@ impl FuelStreamXPlonkClient {
     pub async fn new(timeout: u64) -> Self {
         let prover_client = ProverClient::from_env();
         let (pk, vk) = prover_client.setup(FUELSTREAMX_ELF);
+
+        info!("vkey in use: {}", vk.bytes32());
 
         Self { pk, vk, timeout }
     }

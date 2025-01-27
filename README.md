@@ -24,7 +24,7 @@ cd ./program && cargo prove build --docker
 To build operator: 
 
 ```sh
-docker build -t sp1-fuelstreamx-operator  .
+docker build -t sp1-fuelstreamx-operator .
 ```
 
 Before running the docker container, create an `.env` file with the variables emphasised in the `.env.example` file. 

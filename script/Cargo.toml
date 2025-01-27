@@ -42,7 +42,6 @@ csv = { workspace = true }
 
 fuel-sequencer-proto="0.1.0"
 tonic = { version = "0.11", features = ["tls", "tls-roots"] }
-downcast-rs = "2.0.1"
 unicode-ident = "1.0"
 
 [build-dependencies]
