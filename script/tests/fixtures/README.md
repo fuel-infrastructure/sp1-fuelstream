@@ -2,7 +2,7 @@
 
 To obtain the fixtures for the sequencer, you can use the normal tendermint RPC calls, usually on port 26657.
 
-To obtains the fixtures for grpc queries, you can use the swagger api as follows `<RPC>/swagger/#/Fuel%20Sequencer%20Queries/BridgeCommitment`.
+To obtain the fixtures for grpc queries, you can use the swagger api as follows `<REST>/swagger/#/Fuel%20Sequencer%20Queries/BridgeCommitment`.
 
 ## Ethereum
 

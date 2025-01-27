@@ -98,9 +98,11 @@ impl FuelStreamXTendermintClient {
             .await;
 
         // Obtain all the block headers to construct a bridge commitment hash. Only obtain the headers
-        // between the start and end blocks.
+        // between the start and end blocks (fetch_blocks_in_range excludes the end block).
         let headers = self
             .fetch_blocks_in_range(
+                // start header is deduced from start_light_block which is passed
+                // as trusted_light_block in the proof inputs, so we can skip it (+1)
                 start_light_block.height().value() + 1,
                 end_light_block.height().value(),
             )
@@ -165,7 +167,7 @@ impl FuelStreamXTendermintClient {
     /// Get a block header within a range, end exclusive. Does not obtain the validators' voting
     /// power.
     pub async fn fetch_blocks_in_range(&self, start_block: u64, end_block: u64) -> Vec<Header> {
-        assert!(start_block < end_block, "start_block > max_end_block");
+        assert!(start_block < end_block, "start_block > end_block");
         debug!(
             "fetching light blocks between blocks {} and {}",
             start_block, end_block,
