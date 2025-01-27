@@ -101,6 +101,8 @@ impl FuelStreamXTendermintClient {
         // between the start and end blocks.
         let headers = self
             .fetch_blocks_in_range(
+                // start header is deduced from start_light_block which is passed
+                // as trusted_light_block in the proof inputs, so we can skip it (+1)
                 start_light_block.height().value() + 1,
                 end_light_block.height().value(),
             )
