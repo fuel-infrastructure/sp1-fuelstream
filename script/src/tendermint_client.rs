@@ -98,7 +98,7 @@ impl FuelStreamXTendermintClient {
             .await;
 
         // Obtain all the block headers to construct a bridge commitment hash. Only obtain the headers
-        // between the start and end blocks (fetch_blocks_in_range excludes the end block).
+        // between the start and end block.
         let headers = self
             .fetch_blocks_in_range(
                 // start header is deduced from start_light_block which is passed
