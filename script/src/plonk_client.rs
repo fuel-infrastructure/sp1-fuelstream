@@ -1,18 +1,17 @@
 use anyhow::Result;
-use downcast_rs::Downcast;
 use primitives::types::ProofInputs;
 use sp1_sdk::include_elf;
 use sp1_sdk::{
-    network::FulfillmentStrategy, CpuProver, EnvProver, HashableKey, NetworkProver, ProverClient,
-    SP1ProofWithPublicValues, SP1ProvingKey, SP1Stdin, SP1VerifyingKey,
+    network::FulfillmentStrategy, HashableKey, ProverClient, SP1ProofWithPublicValues,
+    SP1ProvingKey, SP1Stdin, SP1VerifyingKey,
 };
+use std::env;
 use std::time::Duration;
 
 /// The compiled ELF binary for the FuelStreamX circuit
 pub const FUELSTREAMX_ELF: &[u8] = include_elf!("sp1-fuelstreamx-program");
 
 pub struct FuelStreamXPlonkClient {
-    prover: EnvProver,
     /// Used to generate a proof for a given RISC-V program.
     pk: SP1ProvingKey,
     /// Used to verify a proof for a given RISC-V program
@@ -27,12 +26,7 @@ impl FuelStreamXPlonkClient {
         let prover_client = ProverClient::from_env();
         let (pk, vk) = prover_client.setup(FUELSTREAMX_ELF);
 
-        Self {
-            prover: prover_client,
-            pk,
-            vk,
-            timeout,
-        }
+        Self { pk, vk, timeout }
     }
 
     /// Get the abi-encoded vKey
@@ -50,25 +44,30 @@ impl FuelStreamXPlonkClient {
         stdin.write_vec(encoded_proof_inputs);
 
         // Generate Proof
-        match self.prover.as_any() {
-            // If prover is not mocked, it might take a while and requires 128GB+ ram
-            prover if prover.is::<CpuProver>() => prover
-                .downcast_ref::<CpuProver>()
-                .unwrap()
-                .prove(&self.pk, &stdin)
-                .plonk()
-                .run(),
+        // TODO: No downcast available, maybe ask Succinct to include?
+        match env::var("SP1_PROVER").as_deref() {
+            // It might take a while and requires 128GB+ ram
+            Ok("cpu") => {
+                let prover_client = ProverClient::builder().cpu().build();
+                return prover_client.prove(&self.pk, &stdin).plonk().run();
+            }
+            // For testing, the program will run and generate outputs but no proof
+            Ok("mock") => {
+                let prover_client = ProverClient::builder().mock().build();
+                return prover_client.prove(&self.pk, &stdin).plonk().run();
+            }
             // Uses Succinct's on-demand prover to fulfill requests
-            prover if prover.is::<NetworkProver>() => prover
-                .downcast_ref::<NetworkProver>()
-                .unwrap()
-                .prove(&self.pk, &stdin)
-                .strategy(FulfillmentStrategy::Hosted)
-                .skip_simulation(true)
-                .plonk()
-                .timeout(Duration::from_secs(self.timeout))
-                .run(),
-            _ => panic!("unsupported prover type"),
+            Ok("network") => {
+                let prover_client = ProverClient::builder().network().build();
+                return prover_client
+                    .prove(&self.pk, &stdin)
+                    .strategy(FulfillmentStrategy::Hosted)
+                    .skip_simulation(true)
+                    .plonk()
+                    .timeout(Duration::from_secs(self.timeout))
+                    .run();
+            }
+            res => panic!("Unexpected prover type: {:?}", res),
         }
     }
 }

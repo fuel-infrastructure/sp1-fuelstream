@@ -59,7 +59,6 @@ pub fn main() {
         trusted_light_block,
         target_light_block,
         headers,
-        bridge_commitment,
     } = proof_inputs;
 
     let verdict = get_header_update_verdict(&trusted_light_block, &target_light_block);
@@ -85,12 +84,6 @@ pub fn main() {
     all_headers.extend(headers);
     all_headers.push(target_light_block.signed_header.header.clone());
 
-    let generated_bridge_commitment = B256::from_slice(&compute_bridge_commitment(&all_headers));
-    assert!(
-        bridge_commitment.as_slice() == generated_bridge_commitment.as_slice(),
-        "generated bridge commitment does not match"
-    );
-
     // ABI encode the proof outputs to bytes and commit them to the zkVM.
     let trusted_header_hash =
         B256::from_slice(trusted_light_block.signed_header.header.hash().as_bytes());
@@ -101,7 +94,7 @@ pub fn main() {
         trusted_header_hash,
         target_light_block.signed_header.header.height.value(),
         target_header_hash,
-        generated_bridge_commitment,
+        B256::from_slice(&compute_bridge_commitment(&all_headers)),
     ));
     sp1_zkvm::io::commit_slice(&proof_outputs);
 }

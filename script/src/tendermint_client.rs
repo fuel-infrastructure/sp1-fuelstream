@@ -106,25 +106,16 @@ impl FuelStreamXTendermintClient {
             )
             .await;
 
-        let bridge_commitment = self
-            .fetch_bridge_commitment(
-                start_light_block.height().value(),
-                end_light_block.height().value(),
-            )
-            .await;
-
         info!(
-            "next light client update, starting block {} to block {} and commitment 0x{}",
+            "next light client update, starting block {} to block {}",
             start_light_block.height().value(),
             end_light_block.height().value(),
-            hex::encode(bridge_commitment.clone())
         );
 
         ProofInputs {
             trusted_light_block: start_light_block,
             target_light_block: end_light_block,
             headers,
-            bridge_commitment,
         }
     }
 
