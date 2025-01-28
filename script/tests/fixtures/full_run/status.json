@@ -1,0 +1,42 @@
+{
+  "jsonrpc": "2.0",
+  "id": -1,
+  "result": {
+    "node_info": {
+      "protocol_version": {
+        "p2p": "8",
+        "block": "11",
+        "app": "0"
+      },
+      "id": "25bd839624c4044764446a9241fbfb295d1e2233",
+      "listen_addr": "tcp://0.0.0.0:26656",
+      "network": "seq-testnet-2",
+      "version": "0.38.12",
+      "channels": "40202122233038606100",
+      "moniker": "Simply Staking Archive Node MT",
+      "other": {
+        "tx_index": "on",
+        "rpc_address": "tcp://0.0.0.0:26657"
+      }
+    },
+    "sync_info": {
+      "latest_block_hash": "05A832A3F9AA6B96CC996A19623A2625D29C9544408B7F64A8D52A08C74B6A73",
+      "latest_app_hash": "F03A7A037962E3EEBB0A326895BFB2A856B23577B069CE268654BD926AE20040",
+      "latest_block_height": "697178",
+      "latest_block_time": "2025-01-16T14:19:25.312288161Z",
+      "earliest_block_hash": "D024B653E1EAECFB8ED7B87EE5123892B5F14A00DADE2F6C41ECE68E9E9D2B82",
+      "earliest_app_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "earliest_block_height": "1",
+      "earliest_block_time": "2024-12-04T12:00:00Z",
+      "catching_up": false
+    },
+    "validator_info": {
+      "address": "66A05972F0341059E98ABB8658A2191EF14591F8",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "cJR4Gk0dVeZ5cAFac+IQOwW4crUkmgY05kSAilMEstw="
+      },
+      "voting_power": "0"
+    }
+  }
+}

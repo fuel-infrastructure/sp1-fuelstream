@@ -1,0 +1,23 @@
+# Github folder
+.github/
+
+# Build output directory
+target/
+
+# IDE dependencies.
+.idea/
+.vscode/
+.DS_Store
+
+# Contracts
+contracts/
+
+# Testing
+script/tests/
+
+# Markdown files
+*.md
+
+# Private keys
+.env
+.env.*
