@@ -78,8 +78,8 @@ pub fn main() {
         ),
     }
 
-    // Compute the bridge commitment across the range. Target header is
-    // included here but excluded when computing the bridge commitment.
+    // Gather the headers for computing the bridge commitment across the block range.
+    // Target header included here but excluded when computing the bridge commitment.
     let mut all_headers = Vec::new();
     all_headers.push(trusted_light_block.signed_header.header.clone());
     all_headers.extend(headers);
