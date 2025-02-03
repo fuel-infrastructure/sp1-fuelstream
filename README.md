@@ -15,13 +15,7 @@ Forked from [sp1-blobstream using commit cbd1ee173a9acf8cda80bf4b6ed093623dd7e0a
 ## Build & Run with Docker
 
 This step is only required if there were changes to the circuit found in `/program`. 
-You first need to download [sp1 version 4.0.1](https://docs.succinct.xyz/docs/getting-started/install). Afterwards, build the circuit to generate the `elf`:
-
-```sh
-cd ./program && cargo prove build --docker
-```
-
-To build operator: 
+You first need to download [sp1 version 4.0.1](https://docs.succinct.xyz/docs/getting-started/install). To build operator: 
 
 ```sh
 docker build -t sp1-fuelstreamx-operator .
