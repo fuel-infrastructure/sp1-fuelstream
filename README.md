@@ -6,9 +6,9 @@ the light client to safely validate non-trusted blocks and [bridge commitment su
 These commitments allow users to withdraw from the fuel-sequencer to Ethereum and manage the accounting of the `fuel` token. 
 The components are: 
 
-`/program`: The SP1 FuelStreamX circuit that verifies the next light client step.
-`/primitives`: Libraries for types and helper functions used in the program.
-`/script`: Scripts for getting the contract's genesis parameters and deploying the operator to update the light client.
+- `/program`: The SP1 FuelStreamX circuit that verifies the next light client step.
+- `/primitives`: Libraries for types and helper functions used in the program.
+- `/script`: Scripts for getting the contract's genesis parameters and deploying the operator to update the light client.
 
 Forked from [sp1-blobstream using commit cbd1ee173a9acf8cda80bf4b6ed093623dd7e0a9](https://github.com/succinctlabs/sp1-blobstream/tree/cbd1ee173a9acf8cda80bf4b6ed093623dd7e0a9), currently supporting [sp1 v4.0.1](https://github.com/succinctlabs/sp1/releases/tag/v4.0.1).
 
