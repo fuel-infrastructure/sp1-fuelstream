@@ -1,7 +1,6 @@
 use anyhow::Result;
 use log::info;
-use primitives::types::ProofInputs;
-use sp1_sdk::include_elf;
+use sp1_fuelstreamx_primitives::types::ProofInputs;
 use sp1_sdk::{
     network::FulfillmentStrategy, HashableKey, ProverClient, SP1ProofWithPublicValues,
     SP1ProvingKey, SP1Stdin, SP1VerifyingKey,
@@ -10,7 +9,7 @@ use std::env;
 use std::time::Duration;
 
 /// The compiled ELF binary for the FuelStreamX circuit
-pub const FUELSTREAMX_ELF: &[u8] = include_elf!("sp1-fuelstreamx-program");
+pub const FUELSTREAMX_ELF: &[u8] = include_bytes!("../../elf/sp1-fuelstreamx-program");
 
 pub struct FuelStreamXPlonkClient {
     /// Used to generate a proof for a given RISC-V program.

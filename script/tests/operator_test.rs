@@ -13,7 +13,7 @@ mod tests {
 
     use alloy::sol_types::SolType;
 
-    use primitives::types::ProofOutputs;
+    use sp1_fuelstreamx_primitives::types::ProofOutputs;
 
     use std::env;
 

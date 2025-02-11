@@ -2,8 +2,8 @@ use fuel_sequencer_proto::protos::fuelsequencer::commitments::v1::{
     query_client::QueryClient as CommitmentQueryClient, QueryBridgeCommitmentRequest,
 };
 use log::{debug, info};
-use primitives::get_header_update_verdict;
-use primitives::types::ProofInputs;
+use sp1_fuelstreamx_primitives::get_header_update_verdict;
+use sp1_fuelstreamx_primitives::types::ProofInputs;
 use std::time::Duration;
 use tendermint::block::Header;
 use tendermint_light_client::{

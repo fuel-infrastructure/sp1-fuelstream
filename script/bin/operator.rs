@@ -6,7 +6,7 @@ use alloy::sol_types::SolType;
 use anyhow::Result;
 use core::str::FromStr;
 use log::{error, info};
-use primitives::types::ProofOutputs;
+use sp1_fuelstreamx_primitives::types::ProofOutputs;
 use sp1_fuelstreamx_script::{
     ethereum_client::FuelStreamXEthereumClient, plonk_client::FuelStreamXPlonkClient,
     tendermint_client::FuelStreamXTendermintClient,

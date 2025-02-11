@@ -4,6 +4,8 @@ resolver = "2"
 
 [workspace.dependencies]
 
+sp1-fuelstreamx-primitives = { path = "primitives" }
+
 # General
 reqwest = { version = "0.11", features = ["json"] }
 tokio = { version = "^1.38.0", features = ["full"] }

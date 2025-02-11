@@ -4,11 +4,11 @@ name = "sp1-fuelstreamx-program"
 edition = "2021"
 
 [dependencies]
-primitives = { path = "../primitives" }
+sp1-fuelstreamx-primitives = { workspace = true }
 
 sp1-zkvm = { workspace = true }
-tendermint-light-client-verifier = { workspace = true, default-features = false, features = ["rust-crypto"] }
-tendermint = { workspace = true, default-features = false }
+tendermint-light-client-verifier = { workspace = true, default-features = true, features = ["rust-crypto"] }
+tendermint = { workspace = true, default-features = true }
 sha2 = { workspace = true }
 serde_cbor = { workspace = true }
 alloy = { workspace = true, default-features = false, features = ["sol-types"] }

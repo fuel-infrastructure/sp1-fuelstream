@@ -3,9 +3,9 @@ sp1_zkvm::entrypoint!(main);
 
 use alloy::primitives::B256;
 use alloy::sol_types::SolType;
-use primitives::get_header_update_verdict;
-use primitives::types::{BridgeCommitmentLeaf, ProofInputs, ProofOutputs};
 use sha2::Sha256;
+use sp1_fuelstreamx_primitives::get_header_update_verdict;
+use sp1_fuelstreamx_primitives::types::{BridgeCommitmentLeaf, ProofInputs, ProofOutputs};
 use tendermint::{block::Header, merkle::simple_hash_from_byte_vectors};
 use tendermint_light_client_verifier::Verdict;
 

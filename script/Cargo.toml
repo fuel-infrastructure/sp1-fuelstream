@@ -16,7 +16,7 @@ name = "vkey"
 path = "bin/vkey.rs"
 
 [dependencies]
-primitives = { path = "../primitives" }
+sp1-fuelstreamx-primitives = { workspace = true }
 
 alloy = { version = "0.7.0", default-features = true, features = ["full"] }
 tendermint = { workspace = true }
@@ -43,9 +43,6 @@ csv = { workspace = true }
 fuel-sequencer-proto="0.1.0"
 tonic = { version = "0.11", features = ["tls", "tls-roots"] }
 unicode-ident = "1.0"
-
-[build-dependencies]
-sp1-build = "4.0.1"
 
 [dev-dependencies]
 wiremock = "0.6.2"

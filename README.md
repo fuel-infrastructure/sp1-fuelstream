@@ -12,10 +12,25 @@ The components are:
 
 Forked from [sp1-blobstream using commit cbd1ee173a9acf8cda80bf4b6ed093623dd7e0a9](https://github.com/succinctlabs/sp1-blobstream/tree/cbd1ee173a9acf8cda80bf4b6ed093623dd7e0a9), currently supporting [sp1 v4.0.1](https://github.com/succinctlabs/sp1/releases/tag/v4.0.1).
 
+## Build elf
+
+This is only required if circuit changes were made in `/program`. First install [sp1](https://docs.succinct.xyz/docs/sp1/getting-started/install) using:
+
+```bash
+curl -L https://sp1.succinct.xyz | bash && \
+  . ~/.bashrc && \
+  sp1up --version v4.0.1
+```
+
+Then build using:
+
+```bash
+cd ./program && cargo prove build --docker --elf-name sp1-fuelstreamx-program --output-directory ../elf
+```
+
 ## Build & Run with Docker
 
-This step is only required if there were changes to the circuit found in `/program`. 
-You first need to download [sp1 version 4.0.1](https://docs.succinct.xyz/docs/getting-started/install). To build operator: 
+To build operator: 
 
 ```sh
 docker build -t sp1-fuelstreamx-operator .
