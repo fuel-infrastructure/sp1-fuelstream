@@ -23,8 +23,7 @@ WORKDIR /app
 
 # Copy binaries
 COPY --from=builder /app/target/release/operator ./operator
-COPY --from=builder /app/elf/sp1-fuelstreamx-program \
-  ./app/elf/sp1-fuelstreamx-program
+COPY --from=builder /app/elf/sp1-fuelstreamx-program ./app/elf/sp1-fuelstreamx-program
 
 # Install bash for wait-for-it script and other dependencies for HTTP calls 
 RUN apt-get update && apt-get install -y \
