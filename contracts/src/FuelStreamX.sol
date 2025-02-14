@@ -32,9 +32,9 @@ contract FuelStreamX is IFuelStreamX {
 
     // @notice The ABI encoded proof exposed outputs.
     struct ProofOutputs {
-        uint64 trustedBlock;
+        uint256 trustedBlock;
         bytes32 trustedHeaderHash;
-        uint64 targetBlock;
+        uint256 targetBlock;
         bytes32 targetHeaderHash;
         bytes32 bridgeCommitment;
     }
