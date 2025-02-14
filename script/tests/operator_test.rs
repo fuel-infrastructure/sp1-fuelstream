@@ -11,6 +11,7 @@ mod tests {
     use crate::common::mock_tendermint_rpc_server::tests::spawn_tendermint_rpc_server;
     use crate::common::FULL_RUN;
 
+    use alloy::primitives::U256;
     use alloy::sol_types::SolType;
 
     use sp1_fuelstreamx_primitives::types::ProofOutputs;
@@ -73,12 +74,12 @@ mod tests {
 
             // Check that the circuit public outputs are correct.
             // The proof generated is assumed correct and handled by Succinct.
-            assert_eq!(177810, trusted_height);
+            assert_eq!(U256::from(177810), trusted_height);
             assert_eq!(
                 "0x13416213335b27488b910bbfc1087740f0d3d9844af1b2ffd3eaf75433823ce1",
                 trusted_header_hash.to_string()
             );
-            assert_eq!(177840, target_height);
+            assert_eq!(U256::from(177840), target_height);
             assert_eq!(
                 "0x97b040e8c747f83e902ac6f046168c190db913a9eb813e987f1e748656239c3e",
                 target_header_hash.to_string()

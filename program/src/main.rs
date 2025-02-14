@@ -1,7 +1,7 @@
 #![no_main]
 sp1_zkvm::entrypoint!(main);
 
-use alloy::primitives::B256;
+use alloy::primitives::{B256, U256};
 use alloy::sol_types::SolType;
 use sha2::Sha256;
 use sp1_fuelstreamx_primitives::get_header_update_verdict;
@@ -86,14 +86,18 @@ pub fn main() {
     all_headers.push(target_light_block.signed_header.header.clone());
 
     // ABI encode the proof outputs to bytes and commit them to the zkVM.
+    let trusted_height = U256::from(trusted_light_block.signed_header.header.height.value());
+    let target_height = U256::from(target_light_block.signed_header.header.height.value());
+
     let trusted_header_hash =
         B256::from_slice(trusted_light_block.signed_header.header.hash().as_bytes());
     let target_header_hash =
         B256::from_slice(target_light_block.signed_header.header.hash().as_bytes());
+
     let proof_outputs = ProofOutputs::abi_encode(&(
-        trusted_light_block.signed_header.header.height.value(),
+        trusted_height,
         trusted_header_hash,
-        target_light_block.signed_header.header.height.value(),
+        target_height,
         target_header_hash,
         B256::from_slice(&compute_bridge_commitment(&all_headers)),
     ));

@@ -7,4 +7,4 @@ edition = "2021"
 alloy = { workspace = true, default-features = false, features = ["sol-types"] }
 tendermint = { workspace = true, default-features = false }
 tendermint-light-client-verifier = { workspace = true, default-features = false, features = ["rust-crypto"] }
-serde = { workspace = true, default-features = false, features = ["derive"] }
+serde = { workspace = true, features = ["derive"] }

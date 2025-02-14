@@ -5637,6 +5637,7 @@ name = "sp1-fuelstreamx-program"
 version = "0.1.0"
 dependencies = [
  "alloy",
+ "serde",
  "serde_cbor",
  "sha2 0.10.8",
  "sp1-fuelstreamx-primitives",

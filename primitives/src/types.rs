@@ -12,7 +12,7 @@ pub type BridgeCommitmentLeaf = sol! {
 /// Follows the structure as defined in:
 /// TODO: link
 pub type ProofOutputs = sol! {
-    tuple(uint64, bytes32, uint64, bytes32, bytes32)
+    tuple(uint256, bytes32, uint256, bytes32, bytes32)
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
