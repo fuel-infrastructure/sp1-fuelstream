@@ -64,7 +64,7 @@ impl FuelStreamXPlonkClient {
                 return prover_client
                     .prove(&self.pk, &stdin)
                     .strategy(FulfillmentStrategy::Hosted)
-                    .skip_simulation(true)
+                    .skip_simulation(false)
                     .plonk()
                     .timeout(Duration::from_secs(self.timeout))
                     .run();

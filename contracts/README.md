@@ -1,4 +1,6 @@
 
+*This is just an example and will not be deployed to mainnet, refer to FuelLabs/fuel-rollup for the mainnet contracts*
+
 # Deploy new FuelStreamX contract
 
 Fill out the following fields in `.env` in `contracts` folder:
