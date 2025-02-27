@@ -17,6 +17,7 @@ use std::result::Result::Ok;
 use std::time::Duration;
 use FuelStreamX::FuelStreamXInstance;
 
+// https://github.com/FuelLabs/fuel-rollup/blob/3fd8385526837c1e92cfaa6e501bc0d4024b30cf/contracts/fuelstreamx/FuelStreamX.sol#L19
 sol! {
     #[sol(rpc)]
     contract FuelStreamX {
@@ -25,7 +26,7 @@ sol! {
         mapping(uint64 => bytes32) public blockHeightToHeaderHash;
         bytes32 public vKey;
 
-        function commitHeaderRange(
+        function updateCommitHeaderRange(
             bytes calldata proof,
             bytes calldata publicValues
         ) external;
@@ -129,11 +130,14 @@ impl FuelStreamXEthereumClient {
     ) -> Result<FixedBytes<32>> {
         let tx = self
             .contract
-            .commitHeaderRange(proof, public_values)
+            .updateCommitHeaderRange(proof, public_values)
             .send()
             .await
             .map_err(|e| {
-                anyhow::anyhow!("failed to submit commit_header_range transaction: {}", e)
+                anyhow::anyhow!(
+                    "failed to submit update_commit_header_range transaction: {}",
+                    e
+                )
             })?;
 
         let receipt = tx

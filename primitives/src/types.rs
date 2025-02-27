@@ -10,7 +10,7 @@ pub type BridgeCommitmentLeaf = sol! {
 };
 
 /// Follows the structure as defined in:
-/// TODO: link
+/// https://github.com/FuelLabs/fuel-rollup/blob/3fd8385526837c1e92cfaa6e501bc0d4024b30cf/contracts/fuelstreamx/FuelStreamX.sol#L81
 pub type ProofOutputs = sol! {
     tuple(uint64, bytes32, uint64, bytes32, bytes32)
 };
